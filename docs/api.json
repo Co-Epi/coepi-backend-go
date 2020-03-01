@@ -1,0 +1,149 @@
+{
+	"openapi": "3.0.0",
+	"info": {
+		"version": "v.0.2.0",
+		"title": "CEN",
+		"license": {
+			"name": "MIT"
+		}
+	},
+	"servers": [{
+		"url": "https://cenapi.wolk.com:8080"
+	}],
+	"paths": {
+		"/cenreport": {
+			"post": {
+				"tags": [
+					"ble"
+				],
+				"summary": "POST REPORT with CEN Keys (submitted upon Recording Symptoms/Infections)",
+				"requestBody": {
+					"description": "When users report data in an app following the CEN protocol, the app sends a CENReport revealing symptoms/infection along with CENKeys",
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CENReport"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "200 - OK",
+						"content": {
+							"text/plain": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "400 - Error String",
+						"content": {
+							"text/plain": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/cenreport/{timestamp}": {
+			"get": {
+				"tags": [
+					"ble-core"
+				],
+				"summary": "CENKeys Check (periodic polling for newly posted keys)",
+				"description": "An app following the CEN protocol polls this endpoint every few minutes/hours for new CENKeys",
+				"parameters": [
+					{
+						"name": "id",
+						"in": "path",
+						"schema": {
+								"type": "integer"
+						},
+						"required": true
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ExposureCheckResponse"
+								},
+								"examples": {
+									"onecontact": {
+										"value": ["SlNPTkJMT0I6c2V2ZXJlIGZldmVyLGNvdWdoaW5n"]
+									}
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "400 - Error String",
+						"content": {
+							"text/plain": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	},
+	"components": {
+		"schemas": {
+			"CENArray": {
+				"type": "array",
+				"properties": {
+						"type": "string"
+				}
+			},
+			"CENReport": {
+				"type": "object",
+				"required": [
+					"report",
+					"cenKeys"
+				],
+				"properties": {
+					"report": {
+						"type": "string"
+					},
+					"cenKeys": {
+						"type": "string"
+					},
+					"reportMimeType": {
+						"type": "string"
+					},
+					"reportTimestamp": {
+						"type": "integer"
+					}
+				}
+			},
+			"Error": {
+				"type": "object",
+				"required": [
+					"code",
+					"message"
+				],
+				"properties": {
+					"code": {
+						"type": "integer",
+						"format": "int32"
+					},
+					"message": {
+						"type": "string"
+					}
+				}
+			}
+		}
+	}
+}
