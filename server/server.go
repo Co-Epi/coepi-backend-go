@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wolkdb/coepi-backend-go/backend"
+	"github.com/Co-Epi/coepi-backend-go/backend"
 )
 
 const (
@@ -21,9 +21,12 @@ const (
 	caFileName     = "www.wolk.com.bundle"
 
 	// DefaultPort is the port which the coepi HTTP server is listening in on
-	DefaultPort = 8081
+	DefaultPort = 8080
 
-	EndpointExposureCheck       = "exposurecheck"
+	// EndpointExposureCheck is the name of the HTTP endpoint for ExposureCheck
+	EndpointExposureCheck = "exposurecheck"
+
+	// EndpointExposureAndSymptoms is the name of the HTTP endpoint for ExposureAndSymptoms
 	EndpointExposureAndSymptoms = "exposureandsymptoms"
 )
 
@@ -94,18 +97,18 @@ func (s *Server) exposureCheckHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	symptoms, err := s.backend.ProcessExposureCheck(&payload)
+	responses, err := s.backend.ProcessExposureCheck(&payload)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	symptomsJSON, err := json.Marshal(symptoms)
+	responsesJSON, err := json.Marshal(responses)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Write(symptomsJSON)
+	w.Write(responsesJSON)
 }
 
 func (s *Server) homeHandler(w http.ResponseWriter, r *http.Request) {

@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/wolkdb/coepi-backend-go/backend"
-	"github.com/wolkdb/coepi-backend-go/server"
+	"github.com/Co-Epi/coepi-backend-go/backend"
+	"github.com/Co-Epi/coepi-backend-go/server"
 )
 
 // DefaultTransport contains all HTTP client operation parameters
@@ -62,7 +62,7 @@ func TestCoepiSimple(t *testing.T) {
 	endpoint := fmt.Sprintf("coepi.wolk.com:%d", server.DefaultPort)
 
 	eas := new(backend.ExposureAndSymptoms)
-	eas.Contacts = []backend.Contact{backend.Contact{UUID: "ax", Date: "2020-03-04"}, backend.Contact{UUID: "by", Date: "2020-03-15"}, backend.Contact{UUID: "cz", Date: "2020-03-20"}}
+	eas.Contacts = []backend.Contact{backend.Contact{UUIDHash: "ax", DateStamp: "2020-03-04"}, backend.Contact{UUIDHash: "by", DateStamp: "2020-03-15"}, backend.Contact{UUIDHash: "cz", DateStamp: "2020-03-20"}}
 	eas.Symptoms = []byte("JSONBLOB:severe fever,coughing")
 	easJSON, err := json.Marshal(eas)
 	if err != nil {
@@ -77,7 +77,7 @@ func TestCoepiSimple(t *testing.T) {
 	fmt.Printf("exposureandsymptoms[%s]", string(result))
 
 	check1 := new(backend.ExposureCheck)
-	check1.Contacts = []backend.Contact{backend.Contact{UUID: "by", Date: "2020-03-04"}}
+	check1.Contacts = []backend.Contact{backend.Contact{UUIDHash: "by", DateStamp: "2020-03-04"}}
 	check1JSON, err := json.Marshal(check1)
 	if err != nil {
 		t.Fatalf("err: %s", err)
@@ -101,7 +101,7 @@ func TestCoepiSimple(t *testing.T) {
 	fmt.Printf("exposurecheck(check1) SUCCESS: [%s]\n", symptoms[0])
 
 	check0 := new(backend.ExposureCheck)
-	check0.Contacts = []backend.Contact{backend.Contact{UUID: "00", Date: "2020-03-21"}}
+	check0.Contacts = []backend.Contact{backend.Contact{UUIDHash: "00", DateStamp: "2020-03-21"}}
 	check0JSON, err := json.Marshal(check0)
 	if err != nil {
 		t.Fatalf("err: %s", err)

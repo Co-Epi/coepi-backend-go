@@ -1,0 +1,213 @@
+{
+	"openapi": "3.0.0",
+	"info": {
+		"version": "v.0.0.1",
+		"title": "CoEpi",
+		"license": {
+			"name": "MIT"
+		}
+	},
+	"servers": [{
+		"url": "https://coepi.wolk.com:8080"
+	}],
+	"paths": {
+		"/exposureandsymptoms": {
+			"post": {
+				"tags": [
+					"ble-core"
+				],
+				"summary": "Exposure and Symptoms (submitted upon Record Symptoms)",
+				"requestBody": {
+					"description": "When users record symptoms in an app following the CoEpi protocol, the app sends the raw Symptoms (raw bytes) and Contacts to this endpoint",
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/ExposureAndSymptoms"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "200 - OK",
+						"content": {
+							"text/plain": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "400 - Error String",
+						"content": {
+							"text/plain": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/exposurecheck": {
+			"post": {
+				"tags": [
+					"ble-core"
+				],
+				"summary": "Exposure Check (periodic polling for Symptoms of Contacts)",
+				"requestBody": {
+					"description": "An app following the CoEpi protocol polls this endpoint every few minutes/hours with a set of Contact records to check for potential exposure (as reported by the exposureandsymptoms Endpoint).  If any matches are found, any number of Symptoms are returned along with the original Contact",
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/ExposureCheck"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ExposureCheckResponse"
+								},
+								"examples": {
+									"onecontact": {
+										"value": {
+											"exposures": [{
+												"symptoms": "SlNPTkJMT0I6c2V2ZXJlIGZldmVyLGNvdWdoaW5n",
+												"contacts": [{
+													"uuidHash": "by",
+													"dateStamp": "2020-03-04"
+												}]
+											}]
+										}
+									}
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "400 - Error String",
+						"content": {
+							"text/plain": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	},
+	"components": {
+		"schemas": {
+			"ExposureAndSymptoms": {
+				"type": "object",
+				"required": [
+					"symptoms",
+					"contacts"
+				],
+				"properties": {
+					"clientID": {
+						"type": "string"
+					},
+					"symptoms": {
+						"type": "string"
+					},
+					"contacts": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/Contact"
+						}
+					}
+				}
+			},
+			"ExposureCheck": {
+				"type": "object",
+				"required": [
+					"contacts"
+				],
+				"properties": {
+					"contacts": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/Contact"
+						}
+					}
+				}
+			},
+			"Exposure": {
+				"type": "object",
+				"required": [
+					"contacts",
+					"symptoms"
+				],
+				"properties": {
+          "symptoms": {
+            "type": "string"
+          },
+          "contacts": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/Contact"
+						}
+					}
+				}
+			},
+			"Contact": {
+				"type": "object",
+				"required": [
+					"uuidHash",
+					"dateStamp"
+				],
+				"properties": {
+					"uuidHash": {
+						"type": "string"
+					},
+					"dateStamp": {
+						"type": "string",
+						"format": "date"
+					}
+				}
+			},
+			"ExposureCheckResponse": {
+				"type": "object",
+				"required": [
+					"exposures"
+				],
+				"properties": {
+					"exposures": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/Exposure"
+						}
+					}
+				}
+			},
+			"Error": {
+				"type": "object",
+				"required": [
+					"code",
+					"message"
+				],
+				"properties": {
+					"code": {
+						"type": "integer",
+						"format": "int32"
+					},
+					"message": {
+						"type": "string"
+					}
+				}
+			}
+		}
+	}
+}

@@ -24,19 +24,31 @@ type Backend struct {
 
 // Contact represents a BLE pairing between 2 devices
 type Contact struct {
-	UUID string // this is the hash of a pair of BLE ids
-	Date string // this is when the pair came into contact, used to set TTLs
+	UUIDHash  string `json:"uuidHash,omitempty"`  // this is the SHA256 hash of a pair of BLE UUID ids
+	DateStamp string `json:"dateStamp,omitempty"` // this is when the pair came into contact, used to set TTLs
 }
 
 // ExposureAndSymptoms payload is sent by client to /exposureandsymptoms when user reports symptoms
 type ExposureAndSymptoms struct {
-	Symptoms []byte    // this is expected to be a JSON blob but the server doesn't need to parse it
-	Contacts []Contact // these are the contacts th
+	ClientID string    `json:"clientID,omitempty"` // TBD
+	Symptoms []byte    `json:"symptoms,omitempty"` // this is expected to be a JSON blob but the server doesn't need to parse it
+	Contacts []Contact `json:"contacts,omitempty"` // these are the contacts
 }
 
-// ExposureCheck payload is sent by client to /exposurecheck to try to
+// ExposureCheck payload is sent by client to /exposurecheck to check for symptoms
 type ExposureCheck struct {
-	Contacts []Contact
+	Contacts []Contact `json:"contacts,omitempty"`
+}
+
+// ExposureCheckResponse  is sent by server in response /exposurecheck
+type ExposureCheckResponse struct {
+	Exposures []Exposure `json:"exposures,omitempty"`
+}
+
+// Exposure  is sent by server in response /exposurecheck
+type Exposure struct {
+	Symptoms []byte    `json:"symptoms,omitempty"`
+	Contacts []Contact `json:"contacts,omitempty"`
 }
 
 // TableContacts stores the mapping between UUIDs and symptomHash.
@@ -56,7 +68,7 @@ func NewBackend(project, instance string) (backend *Backend, err error) {
 	return backend, nil
 }
 
-// POST /exposureandsymptoms
+// ProcessExposureAndSymptoms manages the API Endpoint to POST /exposureandsymptoms
 //  Input: ExposureAndSymptoms
 //  Output: error
 func (backend *Backend) ProcessExposureAndSymptoms(payload *ExposureAndSymptoms) (err error) {
@@ -75,8 +87,8 @@ func (backend *Backend) ProcessExposureAndSymptoms(payload *ExposureAndSymptoms)
 	// store the first 64 one cell per observation
 	for _, contact := range payload.Contacts {
 		mut := bigtable.NewMutation()
-		mut.Set("symptoms", contact.Date, bigtable.Now(), []byte(fmt.Sprintf("%x", symptomsHash)))
-		err = contactsTable.Apply(context.Background(), contact.UUID, mut)
+		mut.Set("symptoms", contact.DateStamp, bigtable.Now(), []byte(fmt.Sprintf("%x", symptomsHash)))
+		err = contactsTable.Apply(context.Background(), contact.UUIDHash, mut)
 		if err != nil {
 			return err
 		}
@@ -84,15 +96,15 @@ func (backend *Backend) ProcessExposureAndSymptoms(payload *ExposureAndSymptoms)
 	return nil
 }
 
-// POST /exposurecheck
+// ProcessExposureCheck manages the POST API endpoint /exposurecheck
 //  Input: ExposureCheck
-//  Output: array of byte blobs
-func (backend *Backend) ProcessExposureCheck(payload *ExposureCheck) (symptomsList [][]byte, err error) {
+//  Output: array of ExposureCheckResponse
+func (backend *Backend) ProcessExposureCheck(payload *ExposureCheck) (response ExposureCheckResponse, err error) {
 	tableContacts := backend.client.Open(TableContacts)
 	// store one cell per observation
-	symptomsHashes := make([]string, 0)
+	symptomsHashes := make(map[string][]Contact, 0)
 	for _, contact := range payload.Contacts {
-		rr := bigtable.PrefixRange(contact.UUID)
+		rr := bigtable.PrefixRange(contact.UUIDHash)
 		err := tableContacts.ReadRows(context.Background(), rr, func(r bigtable.Row) bool {
 			for k, xv := range r {
 				switch k {
@@ -105,7 +117,11 @@ func (backend *Backend) ProcessExposureCheck(payload *ExposureCheck) (symptomsLi
 								// fmt.Printf("MATCH: %s|%s\n", date, string(yv.Value))
 								// Question: how can we filter on the right number of days without a disease lookup demanding a peek into the symptoms data?
 							}
-							symptomsHashes = append(symptomsHashes, string(yv.Value))
+							symptomsHash := string(yv.Value)
+							if _, ok := symptomsHashes[symptomsHash]; !ok {
+								symptomsHashes[symptomsHash] = make([]Contact, 0)
+							}
+							symptomsHashes[symptomsHash] = append(symptomsHashes[symptomsHash], contact)
 						} else {
 							fmt.Printf("Problem: %d\n", len(dt))
 						}
@@ -120,8 +136,8 @@ func (backend *Backend) ProcessExposureCheck(payload *ExposureCheck) (symptomsLi
 	}
 
 	// For all symptomHashes, get Symptoms byte blobs (containing reported symptoms + severity, dates, etc.)
-	symptomsList = make([][]byte, 0)
-	for _, symptomsHash := range symptomsHashes {
+	exposures := make([]Exposure, 0)
+	for symptomsHash, contacts := range symptomsHashes {
 		tableSymptoms := backend.client.Open(TableSymptoms)
 		rr := bigtable.PrefixRange(symptomsHash)
 		err := tableSymptoms.ReadRows(context.Background(), rr, func(r bigtable.Row) bool {
@@ -130,7 +146,10 @@ func (backend *Backend) ProcessExposureCheck(payload *ExposureCheck) (symptomsLi
 				case "case":
 					for _, yv := range xv {
 						if yv.Column == "case:symptoms" {
-							symptomsList = append(symptomsList, yv.Value)
+							var exposure Exposure
+							exposures = append(exposures, exposure)
+							exposure.Contacts = contacts
+							exposure.Symptoms = yv.Value
 						}
 					}
 				}
@@ -141,7 +160,9 @@ func (backend *Backend) ProcessExposureCheck(payload *ExposureCheck) (symptomsLi
 			// TODO: handle err.
 		}
 	}
-	return symptomsList, nil
+	response.Exposures = exposures
+
+	return response, nil
 }
 
 // Computehash returns the hash of its inputs
