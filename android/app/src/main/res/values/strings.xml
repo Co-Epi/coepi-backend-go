@@ -1,16 +1,7 @@
 <resources>
-    <string name="app_name">Coepi-Android</string>
+    <string name="app_name">CoEpi API Test</string>
     <string name="action_settings">Settings</string>
-    <!-- Strings used for fragments for navigation -->
-    <string name="first_fragment_label">First Fragment</string>
-    <string name="second_fragment_label">Second Fragment</string>
-    <string name="next">Check contacts\' symptoms</string>
-    <string name="previous">Previous</string>
-    <string name="new_contact">New Contact</string>
-    <string name="new_symptom">New Symptom</string>
-    <string name="check_contacts_symptoms">Check Contacts Symptoms</string>
-
-    <string name="hello_first_fragment">Hello Coepi!</string>
-    <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
+    <string name="exposureCheck">Exposure Check</string>
+    <string name="exposureAndSymptoms">ExposureAndSymptoms</string>
 
 </resources>
