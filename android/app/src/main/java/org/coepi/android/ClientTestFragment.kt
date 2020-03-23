@@ -24,25 +24,20 @@ class ClientTestFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // sendExposureCheck(ec: ExposureCheck)
-
         view.findViewById<View>(R.id.buttonExposureAndSymptoms).setOnClickListener { view ->
             val uuIDs: List<Contact>? = model.listContacts(0, 99999999999)
             // get Symptoms from a Dialog box
             val symptomsString = "mild fever, hard to breathe"
             val symptoms = Base64.getEncoder().encodeToString(symptomsString.toByteArray())
             val eas = ExposureAndSymptoms(symptoms, uuIDs)
-            model.sendExposureAndSymptoms(eas)
+            model.onExposureAndSymptoms(eas)
         }
 
         view.findViewById<View>(R.id.buttonExposureCheck).setOnClickListener {
             val uuIDs: List<Contact>? = model.listContacts(0, 99999999999)
             val exposureCheck = ExposureCheck(uuIDs)
-            model.sendExposureCheck(exposureCheck)
+            model.onExposureCheck(exposureCheck)
         }
     }
 
-    companion object {
-        private val uuIDstaic = HashMap<String, GeoTime>()
-    }
 }
