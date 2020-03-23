@@ -1,5 +1,7 @@
 # CoEpi Go Server
 
+This is the Go implementation of the [CoEpi](https://github.com/Co-Epi) backend. 
+
 Tech Lead: Sourabh Niyogi (`sourabh@wolk.com`)
 
 The client-server flow is as follows:`
@@ -170,4 +172,4 @@ _Scott: correct, the geohash is only useful for filtering/sharding/fragmenting t
 Great!  Join the CoEpi Slack channel and say hi to @sourabh, or email sourabh@wolk.com --
 * If you are an experienced Go person (channels, mutexes / concurrency) and enjoy ID matching, send Sourabh a note and we'll figure out what to do.
 
-* If you are an experience iOS or Android person with a strong interest in Bluetooth Low Energy and want to do client-server bridge work, check out `mobile-app` and we will figure out what to do
+* If you are an experienced iOS or Android person with a strong interest in Bluetooth Low Energy and want to do client-server bridge work, check out [app-ios](https://github.com/Co-Epi/app-ios) or [app-android](https://github.com/Co-Epi/app-android) and we will figure out what to do. 
