@@ -82,23 +82,24 @@ func TestCoepiSimple(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	symptomsRaw, err := httppost(fmt.Sprintf("https://%s/%s", endpoint, server.EndpointExposureCheck), check1JSON)
+	exposureCheckResponseRaw, err := httppost(fmt.Sprintf("https://%s/%s", endpoint, server.EndpointExposureCheck), check1JSON)
 	if err != nil {
 		t.Fatalf("exposurecheck: %s", err)
 	}
-	var symptoms [][]byte
-	err = json.Unmarshal(symptomsRaw, &symptoms)
+	var ecr backend.ExposureCheckResponse
+	err = json.Unmarshal(exposureCheckResponseRaw, &ecr)
 	if err != nil {
 		t.Fatalf("exposurecheck(check1): %s", err)
 	}
-	if len(symptoms) != 1 {
-		t.Fatalf("exposurecheck(check1) Expected 1 response, got %d", len(symptoms))
+	if len(ecr.Exposures) != 1 {
+		t.Fatalf("exposurecheck(check1) Expected 1 response, got %d", len(ecr.Exposures))
 	}
 
-	if !bytes.Equal(eas.Symptoms, symptoms[0]) {
-		t.Fatalf("exposurecheck(check1) Expected 1 response, got %d", len(symptoms))
+	exposure := ecr.Exposures[0]
+	if !bytes.Equal(eas.Symptoms, exposure.Symptoms) {
+		t.Fatalf("exposurecheck(check1) Expected %s, got %s", eas.Symptoms, exposure.Symptoms)
 	}
-	fmt.Printf("exposurecheck(check1) SUCCESS: [%s]\n", symptoms[0])
+	fmt.Printf("exposurecheck(check1) SUCCESS: [%s]\n", exposure.Symptoms)
 
 	check0 := new(backend.ExposureCheck)
 	check0.Contacts = []backend.Contact{backend.Contact{UUIDHash: "00", DateStamp: "2020-03-21"}}
@@ -106,16 +107,16 @@ func TestCoepiSimple(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	symptomsRaw, err = httppost(fmt.Sprintf("https://%s/%s", endpoint, server.EndpointExposureCheck), check0JSON)
+	exposureCheckResponseRaw, err = httppost(fmt.Sprintf("https://%s/%s", endpoint, server.EndpointExposureCheck), check0JSON)
 	if err != nil {
 		t.Fatalf("exposurecheck: %s", err)
 	}
-	err = json.Unmarshal(symptomsRaw, &symptoms)
+	err = json.Unmarshal(exposureCheckResponseRaw, &ecr)
 	if err != nil {
 		t.Fatalf("exposurecheck(check1): %s", err)
 	}
-	if len(symptoms) != 0 {
-		t.Fatalf("exposurecheck(check0) Expected 0 responses, but got %d", len(symptoms))
+	if len(ecr.Exposures) != 0 {
+		t.Fatalf("exposurecheck(check0) Expected 0 responses, but got %d", len(ecr.Exposures))
 	}
 	fmt.Printf("exposurecheck(check0) SUCCESS: []\n")
 }

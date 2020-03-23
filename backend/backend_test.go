@@ -56,7 +56,7 @@ func TestBackendSimple(t *testing.T) {
 
 	exposure := response.Exposures[0]
 	if !bytes.Equal(exposure.Symptoms, eas.Symptoms) {
-		t.Fatalf("ProcessExposureCheck(check1) Symptoms Mismatch: expected %s, got %s", eas.Symptoms, exposure.Symptoms)
+		t.Fatalf("ProcessExposureCheck(check1) Symptoms Mismatch: expected %s, got [%s]", eas.Symptoms, exposure.Symptoms)
 	}
 	fmt.Printf("ProcessExposureCheck(check1) SUCCESS: [%s]\n", exposure.Symptoms)
 

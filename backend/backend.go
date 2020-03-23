@@ -147,9 +147,9 @@ func (backend *Backend) ProcessExposureCheck(payload *ExposureCheck) (response E
 					for _, yv := range xv {
 						if yv.Column == "case:symptoms" {
 							var exposure Exposure
-							exposures = append(exposures, exposure)
 							exposure.Contacts = contacts
 							exposure.Symptoms = yv.Value
+							exposures = append(exposures, exposure)
 						}
 					}
 				}
