@@ -17,6 +17,6 @@ class Contact {
     @ColumnInfo(name = "latitude")
     var latitude: Double? = null
 
-    @ColumnInfo(name = "latitude")
+    @ColumnInfo(name = "longitude")
     var longitude: Double? = null
 }

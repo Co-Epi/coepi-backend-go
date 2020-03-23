@@ -16,7 +16,7 @@ interface SymptomsDao {
     fun loadAllById(id: String?): List<Symptoms?>?
 
     @Query("SELECT * FROM symptoms WHERE :first <= timeStamp AND timeStamp <= :last LIMIT 1")
-    fun findByRange(first: String?, last: String?): List<Contact?>?
+    fun findByRange(first: String?, last: String?): List<Symptoms?>?
 
     @Insert
     fun insertAll(contact: Symptoms?)
