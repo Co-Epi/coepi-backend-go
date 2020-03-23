@@ -61,6 +61,7 @@ func httppost(url string, body []byte) (result []byte, err error) {
 func TestCoepiSimple(t *testing.T) {
 	endpoint := fmt.Sprintf("coepi.wolk.com:%d", server.DefaultPort)
 
+	// Post 
 	eas := new(backend.ExposureAndSymptoms)
 	eas.Contacts = []backend.Contact{backend.Contact{UUIDHash: "ax", DateStamp: "2020-03-04"}, backend.Contact{UUIDHash: "by", DateStamp: "2020-03-15"}, backend.Contact{UUIDHash: "cz", DateStamp: "2020-03-20"}}
 	eas.Symptoms = []byte("JSONBLOB:severe fever,coughing")
@@ -68,13 +69,12 @@ func TestCoepiSimple(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	fmt.Printf("ExposureAndSymptoms Sample: %s\n", easJSON)
 
 	result, err := httppost(fmt.Sprintf("https://%s/%s", endpoint, server.EndpointExposureAndSymptoms), easJSON)
 	if err != nil {
 		t.Fatalf("exposureandsymptoms: %s", err)
 	}
-	fmt.Printf("exposureandsymptoms[%s]", string(result))
+	fmt.Printf("exposureandsymptoms[%s]\n", string(result))
 
 	check1 := new(backend.ExposureCheck)
 	check1.Contacts = []backend.Contact{backend.Contact{UUIDHash: "by", DateStamp: "2020-03-04"}}
@@ -87,6 +87,7 @@ func TestCoepiSimple(t *testing.T) {
 		t.Fatalf("exposurecheck: %s", err)
 	}
 	var ecr backend.ExposureCheckResponse
+	fmt.Printf("exposureCheckResponseRaw: %s\n", exposureCheckResponseRaw)
 	err = json.Unmarshal(exposureCheckResponseRaw, &ecr)
 	if err != nil {
 		t.Fatalf("exposurecheck(check1): %s", err)
@@ -111,12 +112,13 @@ func TestCoepiSimple(t *testing.T) {
 	if err != nil {
 		t.Fatalf("exposurecheck: %s", err)
 	}
-	err = json.Unmarshal(exposureCheckResponseRaw, &ecr)
+	var ecr0 backend.ExposureCheckResponse
+	err = json.Unmarshal(exposureCheckResponseRaw, &ecr0)
 	if err != nil {
 		t.Fatalf("exposurecheck(check1): %s", err)
 	}
-	if len(ecr.Exposures) != 0 {
-		t.Fatalf("exposurecheck(check0) Expected 0 responses, but got %d", len(ecr.Exposures))
+	if len(ecr0.Exposures) != 0 {
+		t.Fatalf("exposurecheck(check0) Expected 0 responses, but got %d [%s]", len(ecr0.Exposures), exposureCheckResponseRaw)
 	}
 	fmt.Printf("exposurecheck(check0) SUCCESS: []\n")
 }

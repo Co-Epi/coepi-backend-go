@@ -102,12 +102,12 @@ func (s *Server) exposureCheckHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
 	responsesJSON, err := json.Marshal(responses)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	fmt.Printf("exposureCheck: %s\n", responsesJSON)
 	w.Write(responsesJSON)
 }
 
