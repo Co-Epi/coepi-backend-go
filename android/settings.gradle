@@ -1,0 +1,2 @@
+rootProject.name='Coepi-Android'
+include ':app'
