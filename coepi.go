@@ -4,8 +4,8 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/wolkdb/coepi-backend-go/backend"
-	"github.com/wolkdb/coepi-backend-go/server"
+	"github.com/Co-Epi/coepi-backend-go/backend"
+	"github.com/Co-Epi/coepi-backend-go/server"
 )
 
 func main() {
