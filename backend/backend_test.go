@@ -5,70 +5,72 @@ import (
 	"encoding/json"
 	"fmt"
 	"testing"
+	"time"
 )
 
-func getJSONSamples() (eas *ExposureAndSymptoms, check1 *ExposureCheck, check0 *ExposureCheck) {
-	eas = new(ExposureAndSymptoms)
-	eas.Contacts = []Contact{Contact{UUIDHash: "ax", DateStamp: "2020-03-04"}, Contact{UUIDHash: "by", DateStamp: "2020-03-15"}, Contact{UUIDHash: "cz", DateStamp: "2020-03-20"}}
-	eas.Symptoms = []byte("JSONBLOB:severe fever,coughing")
-
-	check1 = new(ExposureCheck)
-	check1.Contacts = []Contact{Contact{UUIDHash: "by", DateStamp: "2020-03-04"}}
-
-	check0 = new(ExposureCheck)
-	check0.Contacts = []Contact{Contact{UUIDHash: "00", DateStamp: "2020-03-21"}}
-	return eas, check1, check0
-}
-
-func TestJSONSample(t *testing.T) {
-	eas, check1, _ := getJSONSamples()
-	easJSON, err := json.Marshal(eas)
-	if err != nil {
-		t.Fatalf("err: %s", err)
-	}
-	fmt.Printf("ExposureAndSymptoms Sample: %s\n", easJSON)
-	check1JSON, err := json.Marshal(check1)
-	if err != nil {
-		t.Fatalf("err: %s", err)
-	}
-	fmt.Printf("ExposureCheck Sample: %s\n", check1JSON)
-}
-
 func TestBackendSimple(t *testing.T) {
-	backend, err := NewBackend(DefaultProject, DefaultInstance)
+	cenReport, cenReportKeys := GetSampleCENReportAndCENKeys(2)
+	cenReportJSON, err := json.Marshal(cenReport)
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	fmt.Printf("CENReportJSON Sample: %s\n", cenReportJSON)
+
+	for i, cenReportKey := range cenReportKeys {
+		fmt.Printf("CENKey %d: %s\n", i, cenReportKey)
+	}
+
+	backend, err := NewBackend(DefaultConnString)
 	if err != nil {
 		t.Fatalf("%s", err)
 	}
 
-	eas, check1, check0 := getJSONSamples()
-	err = backend.ProcessExposureAndSymptoms(eas)
+	// submit CEN Report
+	err = backend.ProcessCENReport(cenReport)
 	if err != nil {
-		t.Fatalf("ProcessExposureAndSymptoms: %s", err)
+		t.Fatalf("ProcessCENReport: %s", err)
 	}
 
-	response, err := backend.ProcessExposureCheck(check1)
+	// get recent CENKeys (last 10 seconds)
+	curTS := uint64(time.Now().Unix())
+	cenKeys, err := backend.ProcessGetCENKeys(curTS - 10)
 	if err != nil {
-		t.Fatalf("ProcessExposureCheck(check1): %s", err)
+		t.Fatalf("ProcessGetCENKeys(check1): %s", err)
 	}
-	if len(response.Exposures) != 1 {
-		t.Fatalf("ProcessExposureCheck(check1) Expected 1 response, got %d", len(response.Exposures))
+	fmt.Printf("ProcessGetCENKeys %d records\n", len(cenKeys))
+	if len(cenKeys) < 1 {
+		t.Fatalf("ProcessGetCENKeys: %d records found", len(cenKeys))
+	}
+	// check if the first 2 are are in the report
+	found := make([]bool, len(cenKeys))
+	for _, cenKey := range cenKeys {
+		fmt.Printf("Recent Keys: [%s]\n", cenKey)
+		for j, reportKey := range cenReportKeys {
+			if cenKey == reportKey {
+				found[j] = true
+			}
+		}
 	}
 
-	exposure := response.Exposures[0]
-	if !bytes.Equal(exposure.Symptoms, eas.Symptoms) {
-		t.Fatalf("ProcessExposureCheck(check1) Symptoms Mismatch: expected %s, got [%s]", eas.Symptoms, exposure.Symptoms)
+	// get the report data from the first two keys
+	for i := 0; i < 2; i++ {
+		if !found[i] {
+			t.Fatalf("ProcessGetCENKeys key 0 in report [%s] not found", cenReportKeys[0])
+		}
+		cenKey := cenKeys[i]
+		reports, err := backend.ProcessGetCENReport(cenKey)
+		if err != nil {
+			t.Fatalf("ProcessGetCENReport: %s", err)
+		}
+		if len(reports) > 0 {
+			report := reports[0]
+			if !bytes.Equal(report.Report, cenReport.Report) {
+				t.Fatalf("ProcessGetCENReport Report Mismatch: expected %s, got [%s]", report.Report, cenReport.Report)
+			}
+			fmt.Printf("ProcessGetCENReport SUCCESS (%s): [%s]\n", cenKey, report.Report)
+		} else {
+			t.Fatalf("ProcessGetCENReport: Report not found for cenKey %s\n", cenKey)
+		}
 	}
-	fmt.Printf("ProcessExposureCheck(check1) SUCCESS: [%s]\n", exposure.Symptoms)
 
-	response, err = backend.ProcessExposureCheck(check0)
-	if err != nil {
-		t.Fatalf("ProcessExposureCheck(check0): %s", err)
-	}
-	if len(response.Exposures) != 0 {
-		t.Fatalf("processExposureCheck(check0) Expected 0 responses, but got %d", len(response.Exposures))
-	}
-	fmt.Printf("processExposureCheck(check0) SUCCESS: []\n")
 }
-
-// TODO: setup N random users and have them generate Contact records between themselves in N goroutines, each doing a ExposureCheck every few seconds
-//  Then have N/10 users post a ExposureAndSymptoms, which should have some of the go routines generating symptom responses

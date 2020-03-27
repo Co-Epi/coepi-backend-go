@@ -1,28 +1,28 @@
 {
 	"openapi": "3.0.0",
 	"info": {
-		"version": "v.0.0.1",
-		"title": "CoEpi",
+		"version": "v.0.2.0",
+		"title": "CEN",
 		"license": {
 			"name": "MIT"
 		}
 	},
 	"servers": [{
-		"url": "https://coepi.wolk.com:8080"
+		"url": "https://cenapi.wolk.com:8080"
 	}],
 	"paths": {
-		"/exposureandsymptoms": {
+		"/cenreport": {
 			"post": {
 				"tags": [
-					"ble-core"
+					"ble"
 				],
-				"summary": "Exposure and Symptoms (submitted upon Record Symptoms)",
+				"summary": "POST REPORT with CEN Keys (submitted upon Recording Symptoms/Infections)",
 				"requestBody": {
-					"description": "When users record symptoms in an app following the CoEpi protocol, the app sends the raw Symptoms (raw bytes) and Contacts to this endpoint",
+					"description": "When users report data in an app following the CEN protocol, the app sends a CENReport revealing symptoms/infection along with CENKeys",
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/ExposureAndSymptoms"
+								"$ref": "#/components/schemas/CENReport"
 							}
 						}
 					},
@@ -52,23 +52,23 @@
 				}
 			}
 		},
-		"/exposurecheck": {
-			"post": {
+		"/cenreport/{timestamp}": {
+			"get": {
 				"tags": [
 					"ble-core"
 				],
-				"summary": "Exposure Check (periodic polling for Symptoms of Contacts)",
-				"requestBody": {
-					"description": "An app following the CoEpi protocol polls this endpoint every few minutes/hours with a set of Contact records to check for potential exposure (as reported by the exposureandsymptoms Endpoint).  If any matches are found, any number of Symptoms are returned along with the original Contact",
-					"content": {
-						"application/json": {
-							"schema": {
-								"$ref": "#/components/schemas/ExposureCheck"
-							}
-						}
-					},
-					"required": true
-				},
+				"summary": "CENKeys Check (periodic polling for newly posted keys)",
+				"description": "An app following the CEN protocol polls this endpoint every few minutes/hours for new CENKeys",
+				"parameters": [
+					{
+						"name": "id",
+						"in": "path",
+						"schema": {
+								"type": "integer"
+						},
+						"required": true
+					}
+				],
 				"responses": {
 					"200": {
 						"description": "OK",
@@ -79,15 +79,7 @@
 								},
 								"examples": {
 									"onecontact": {
-										"value": {
-											"exposures": [{
-												"symptoms": "SlNPTkJMT0I6c2V2ZXJlIGZldmVyLGNvdWdoaW5n",
-												"contacts": [{
-													"uuidHash": "by",
-													"dateStamp": "2020-03-04"
-												}]
-											}]
-										}
+										"value": ["SlNPTkJMT0I6c2V2ZXJlIGZldmVyLGNvdWdoaW5n"]
 									}
 								}
 							}
@@ -109,86 +101,30 @@
 	},
 	"components": {
 		"schemas": {
-			"ExposureAndSymptoms": {
+			"CENArray": {
+				"type": "array",
+				"properties": {
+						"type": "string"
+				}
+			},
+			"CENReport": {
 				"type": "object",
 				"required": [
-					"symptoms",
-					"contacts"
+					"report",
+					"cenKeys"
 				],
 				"properties": {
-					"clientID": {
+					"report": {
 						"type": "string"
 					},
-					"symptoms": {
+					"cenKeys": {
 						"type": "string"
 					},
-					"contacts": {
-						"type": "array",
-						"items": {
-							"$ref": "#/components/schemas/Contact"
-						}
-					}
-				}
-			},
-			"ExposureCheck": {
-				"type": "object",
-				"required": [
-					"contacts"
-				],
-				"properties": {
-					"contacts": {
-						"type": "array",
-						"items": {
-							"$ref": "#/components/schemas/Contact"
-						}
-					}
-				}
-			},
-			"Exposure": {
-				"type": "object",
-				"required": [
-					"contacts",
-					"symptoms"
-				],
-				"properties": {
-          "symptoms": {
-            "type": "string"
-          },
-          "contacts": {
-						"type": "array",
-						"items": {
-							"$ref": "#/components/schemas/Contact"
-						}
-					}
-				}
-			},
-			"Contact": {
-				"type": "object",
-				"required": [
-					"uuidHash",
-					"dateStamp"
-				],
-				"properties": {
-					"uuidHash": {
+					"reportMimeType": {
 						"type": "string"
 					},
-					"dateStamp": {
-						"type": "string",
-						"format": "date"
-					}
-				}
-			},
-			"ExposureCheckResponse": {
-				"type": "object",
-				"required": [
-					"exposures"
-				],
-				"properties": {
-					"exposures": {
-						"type": "array",
-						"items": {
-							"$ref": "#/components/schemas/Exposure"
-						}
+					"reportTimestamp": {
+						"type": "integer"
 					}
 				}
 			},

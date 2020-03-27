@@ -3,6 +3,6 @@
 GOBIN = $(shell pwd)/bin
 GO ?= latest
 
-coepi:
-		go build -o bin/coepi
-		@echo "Done building coepi.  Run \"$(GOBIN)/coepi\" to launch coepi."
+cen:
+		go build -o bin/cen
+		@echo "Done building cen.  Run \"$(GOBIN)/cen\" to launch cen."

@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 
@@ -16,18 +17,18 @@ import (
 
 const (
 	// adjust these below to your SSL Cert location
-	sslBaseDir     = "/etc/pki/tls/certs/wildcard"
+	sslBaseDir     = "/etc/pki/tls/certs/wildcard/wolk.com-new"
 	sslKeyFileName = "www.wolk.com.key"
 	caFileName     = "www.wolk.com.bundle"
 
-	// DefaultPort is the port which the coepi HTTP server is listening in on
+	// DefaultPort is the port which the CEN HTTP server is listening in on
 	DefaultPort = 8080
 
-	// EndpointExposureCheck is the name of the HTTP endpoint for ExposureCheck
-	EndpointExposureCheck = "exposurecheck"
+	// EndpointCENReport is the name of the HTTP endpoint for GET/POST of CENReport
+	EndpointCENReport = "cenreport"
 
-	// EndpointExposureAndSymptoms is the name of the HTTP endpoint for ExposureAndSymptoms
-	EndpointExposureAndSymptoms = "exposureandsymptoms"
+	// EndpointCENKeys is the name of the HTTP endpoint for GET CenKeys
+	EndpointCENKeys = "cenkeys"
 )
 
 // Server manages HTTP connections
@@ -38,11 +39,11 @@ type Server struct {
 }
 
 // NewServer returns an HTTP Server to handle simple-api-process-flow https://github.com/Co-Epi/data-models/blob/master/simple-api-process-flow.md
-func NewServer(httpPort uint16, project, instance string) (s *Server, err error) {
+func NewServer(httpPort uint16, connString string) (s *Server, err error) {
 	s = &Server{
 		HTTPPort: httpPort,
 	}
-	backend, err := backend.NewBackend(project, instance)
+	backend, err := backend.NewBackend(connString)
 	if err != nil {
 		return s, err
 	}
@@ -55,73 +56,16 @@ func NewServer(httpPort uint16, project, instance string) (s *Server, err error)
 	return s, nil
 }
 
-func (s *Server) exposureAndSymptomsHandler(w http.ResponseWriter, r *http.Request) {
-	// Read Post Body
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	r.Body.Close()
-
-	// Parse body as ExposureAndSymptoms
-	var payload backend.ExposureAndSymptoms
-	err = json.Unmarshal(body, &payload)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Handle ExposureAndSymptoms payload
-	err = s.backend.ProcessExposureAndSymptoms(&payload)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-	w.Write([]byte("OK"))
-}
-
-func (s *Server) exposureCheckHandler(w http.ResponseWriter, r *http.Request) {
-	var payload backend.ExposureCheck
-
-	// Read Post Body
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	r.Body.Close()
-
-	err = json.Unmarshal(body, &payload)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	responses, err := s.backend.ProcessExposureCheck(&payload)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	responsesJSON, err := json.Marshal(responses)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	fmt.Printf("exposureCheck: %s\n", responsesJSON)
-	w.Write(responsesJSON)
-}
-
-func (s *Server) homeHandler(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Visit https://coepi.org for more information."))
-}
-
 func (s *Server) getConnection(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-
-	if strings.Contains(r.URL.Path, EndpointExposureCheck) {
-		s.exposureCheckHandler(w, r)
-	} else if strings.Contains(r.URL.Path, EndpointExposureAndSymptoms) {
-		s.exposureAndSymptomsHandler(w, r)
+	if strings.Contains(r.URL.Path, EndpointCENReport) {
+		if r.Method == http.MethodPost {
+			s.postCENReportHandler(w, r)
+		} else {
+			s.getCENReportHandler(w, r)
+		}
+	} else if strings.Contains(r.URL.Path, EndpointCENKeys) {
+		s.getCENKeysHandler(w, r)
 	} else {
 		s.homeHandler(w, r)
 	}
@@ -140,11 +84,7 @@ func (s *Server) Start() (err error) {
 	CAFile := path.Join(sslBaseDir, caFileName)
 
 	// Note: bringing the intermediate certs with CAFile into a cert pool and the tls.Config is *necessary*
-	certpool, err := x509.SystemCertPool() // https://stackoverflow.com/questions/26719970/issues-with-tls-connection-in-golang -- instead of x509.NewCertPool()
-	if err != nil {
-		return fmt.Errorf("SystemCertPool: %v", err)
-	}
-
+	certpool := x509.NewCertPool() // https://stackoverflow.com/questions/26719970/issues-with-tls-connection-in-golang -- instead of x509.NewCertPool()
 	pem, err := ioutil.ReadFile(CAFile)
 	if err != nil {
 		return fmt.Errorf("Failed to read client certificate authority: %v", err)
@@ -166,4 +106,83 @@ func (s *Server) Start() (err error) {
 		return err
 	}
 	return nil
+}
+
+// POST /cenreport
+func (s *Server) postCENReportHandler(w http.ResponseWriter, r *http.Request) {
+	// Read Post Body
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	r.Body.Close()
+
+	// Parse body as CENReport
+	var payload backend.CENReport
+	err = json.Unmarshal(body, &payload)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Process CENReport payload
+	err = s.backend.ProcessCENReport(&payload)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	w.Write([]byte("OK"))
+}
+
+// GET /cenreport/<cenkey>
+func (s *Server) getCENReportHandler(w http.ResponseWriter, r *http.Request) {
+	cenKey := ""
+	pathpieces := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+	if len(pathpieces) >= 1 {
+		cenKey = pathpieces[1]
+	}
+
+	// Handle CenKey
+	reports, err := s.backend.ProcessGetCENReport(cenKey)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	responsesJSON, err := json.Marshal(reports)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	fmt.Printf("getCENReportHandler: %s\n", responsesJSON)
+	w.Write(responsesJSON)
+}
+
+// /cenkeys/<timestamp>
+func (s *Server) getCENKeysHandler(w http.ResponseWriter, r *http.Request) {
+	ts := uint64(0)
+	pathpieces := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+	if len(pathpieces) >= 1 {
+		tsa, err := strconv.Atoi(pathpieces[1])
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		ts = uint64(tsa)
+	}
+
+	cenKeys, err := s.backend.ProcessGetCENKeys(ts)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	responsesJSON, err := json.Marshal(cenKeys)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	fmt.Printf("genCENKeysHandler: %s\n", responsesJSON)
+	w.Write(responsesJSON)
+}
+
+func (s *Server) homeHandler(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("CEN API Server v0.2"))
 }
