@@ -127,7 +127,7 @@ func (backend *Backend) ProcessCENReport(cenReport *CENReport) (err error) {
 	for _, cenKey := range cenKeys {
 		cenKey := strings.Trim(cenKey, " \n")
 		if len(cenKey) > 62 && len(cenKey) <= 64 {
-			_, err = stmtKeys.Exec(cenKey, reportID, cenReport.ReportTimestamp)
+			_, err = stmtKeys.Exec(cenKey, reportID, cenReport.ReportTimeStamp)
 			if err != nil {
 				return err
 			}
