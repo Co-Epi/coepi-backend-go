@@ -28,11 +28,59 @@ type Backend struct {
 	db *sql.DB
 }
 
+//
+// Brian Dickson's added comments for understanding the SQL elements used/required
+//
+// OLD DEFINITIONS, WRONG SIZE FOR cenKey
+//
+//  CREATE TABLE `CENKeys` (
+//     `cenKey`   varchar(32) DEFAULT "", 
+//     `reportID` varchar(64) DEFAULT "",
+//     `reportTS` int,
+//     PRIMARY KEY (`cenKey`, `reportID`),
+//     KEY (`reportID`),
+//     KEY (`reportTS`),
+//     KEY (`cenKey`)
+//  );
+//  
+//  CREATE TABLE `CENReport` (
+//     `reportID` varchar(64) DEFAULT "",
+//     `report`     varchar(4000) DEFAULT "",
+//     `reportMimeType` varchar(64) DEFAULT "",
+//     `reportTS` int,
+//     PRIMARY KEY (`reportID`),
+//     KEY (`reportTS`)
+//  );
+//
+//
+// NEW DEFINITIONS, RIGHT SIZE FOR cenKey
+//
+//  CREATE TABLE `CENKeys` (
+//     `cenKey`   varchar(64) DEFAULT "", 
+//     `reportID` varchar(64) DEFAULT "",
+//     `reportTS` int,
+//     PRIMARY KEY (`cenKey`, `reportID`),
+//     KEY (`reportID`),
+//     KEY (`reportTS`),
+//     KEY (`cenKey`)
+//  );
+//  
+//  CREATE TABLE `CENReport` (
+//     `reportID` varchar(64) DEFAULT "",
+//     `report`     varchar(4000) DEFAULT "",
+//     `reportMimeType` varchar(64) DEFAULT "",
+//     `reportTS` int,
+//     PRIMARY KEY (`reportID`),
+//     KEY (`reportTS`)
+//  );
+//
+//
+
 // CENReport payload is sent by client to /cenreport when user reports symptoms
 type CENReport struct {
 	ReportID        string `json:"reportID,omitempty"`
 	Report          []byte `json:"report,omitempty"`  // this is expected to be a JSON blob but the server doesn't need to parse it
-	CENKeys         string `json:"cenKeys,omitempty"` // comma separated list of base64 AES Keys
+	CENKeys         string `json:"cenKeys,omitempty"` // comma separated list of hex AES-128 Keys (COMMENT WAS: base64 AES Keys)
 	ReportMimeType  string `json:"reportMimeType,omitempty"`
 	ReportTimeStamp uint64 `json:"reportTimeStamp,omitempty"`
 }
@@ -78,8 +126,8 @@ func (backend *Backend) ProcessCENReport(cenReport *CENReport) (err error) {
 	// store the cenreportID in cenkeys table, one row per key
 	for _, cenKey := range cenKeys {
 		cenKey := strings.Trim(cenKey, " \n")
-		if len(cenKey) > 30 && len(cenKey) <= 32 {
-			_, err = stmtKeys.Exec(cenKey, reportID, curTS)
+		if len(cenKey) > 62 && len(cenKey) <= 64 {
+			_, err = stmtKeys.Exec(cenKey, reportID, cenReport.ReportTimestamp)
 			if err != nil {
 				return err
 			}
@@ -87,7 +135,7 @@ func (backend *Backend) ProcessCENReport(cenReport *CENReport) (err error) {
 	}
 
 	// store the cenreportID in cenReport table, one row per key
-	_, err = stmtReport.Exec(reportID, cenReport.Report, cenReport.ReportMimeType, curTS)
+	_, err = stmtReport.Exec(reportID, cenReport.Report, cenReport.ReportMimeType, cenReport.ReportTimeStamp)
 	if err != nil {
 		panic(5)
 		return err
