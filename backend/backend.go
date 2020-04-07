@@ -222,9 +222,11 @@ func GetSampleCENReportAndCENKeys(nKeys int) (cenReport *CENReport, cenKeys []st
 		cenKeys[i] = makeCENKeyString()
 	}
 	CENKeys := fmt.Sprintf("%s,%s", cenKeys[0], cenKeys[1])
+	curTS := uint64(time.Now().Unix())
 	cenReport = new(CENReport)
 	cenReport.ReportID = "1"
 	cenReport.Report = []byte("severe fever,coughing,hard to breathe")
 	cenReport.CENKeys = CENKeys
+	cenReport.ReportTimeStamp = curTS
 	return cenReport, cenKeys
 }
