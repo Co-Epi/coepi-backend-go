@@ -58,7 +58,8 @@ Sample:
 ```
 # curl "https://coepi.wolk.com:8080/cenreport/13298327ebcebe7f153b956e4596d503"
 [{"reportID":"338b0448df60447a23b36fd02ad5a7d8f036836e0ce52b848d3302001cc67a40","report":"c2V2ZXJlIGZldmVyLGNvdWdoaW5nLGhhcmQgdG8gYnJlYXRoZQ==","reportTimeStamp":1585622194}
-=======
+```
+
 The flow is as follows:`
 1. Apps use secret 128-bit AES keys (CENKeys) to broadcast CENs using BLE
 
