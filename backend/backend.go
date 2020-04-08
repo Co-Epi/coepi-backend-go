@@ -20,7 +20,7 @@ const (
 	TableCENReport = "CENReport"
 
 	// Default Conn String 
-	DefaultConnString = "[change this to your server]"
+	DefaultConnString = "root:2Nemesis234@/conn"
 )
 
 // Backend holds a client to connect  to the BigTable backend
@@ -120,7 +120,6 @@ func (backend *Backend) ProcessCENReport(cenReport *CENReport) (err error) {
 		return err
 	}
 
-	curTS := uint64(time.Now().Unix())
 	reportID := fmt.Sprintf("%x", Computehash(reportData))
 	cenKeys := strings.Split(cenReport.CENKeys, ",")
 	// store the cenreportID in cenkeys table, one row per key
@@ -209,7 +208,7 @@ func Computehash(data ...[]byte) []byte {
 }
 
 func makeCENKeyString() string {
-	key := make([]byte, 16)
+	key := make([]byte, 32)
 	rand.Read(key)
 	encoded := fmt.Sprintf("%x", key)
 	return encoded
