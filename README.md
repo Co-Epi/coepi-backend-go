@@ -37,7 +37,7 @@ Please provide feedback over Slack and standup.
 ### POST `/cenreport`
 Request Body: JSON Object - `CENReport`
 ```
-# curl -X POST "https://coepi.wolk.com:8080/cenreport/13298327ebcebe7f153b956e4596d503" -d '{"reportID":"80d2910e783ab87837b444c224a31c9745afffaaacd4fb6eacf233b5f30e3113","report":"c2V2ZXJlIGZldmVyLGNvdWdoaW5nLGhhcmQgdG8gYnJlYXRoZQ==","cenKeys":"b85c4b373adde4c66651ba63aef40f48,41371323cc938a0e3c55b0694bfd23f5","reportTimeStamp":1585622063}'
+curl -X POST "https://coepi.wolk.com:8080/cenreport" -d '{"report":"c2V2ZXJlIGZldmVyLGNvdWdoaW5nLGhhcmQgdG8gYnJlYXRoZQ==","cenKeys":["b85c4b373adde4c66651ba63aef40f48","41371323cc938a0e3c55b0694bfd23f5"]}'
 ```
 
 ### GET `/cenkeys/<timestamp>`
