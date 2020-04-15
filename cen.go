@@ -15,6 +15,7 @@ const (
 func main() {
 	port := flag.Uint("port", uint(server.DefaultPort), "port cen is listening on")
 	mysqlConnectionString := flag.String("conn", backend.DefaultConnString, "MySQL Connection String")
+	flag.Parse()
 
 	_, err := server.NewServer(uint16(*port), *mysqlConnectionString)
 	if err != nil {
