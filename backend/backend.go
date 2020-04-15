@@ -20,7 +20,7 @@ const (
 	TableCENReport = "CENReport"
 
 	// Default Conn String 
-	DefaultConnString = "root:2Nemesis234@/conn"
+	DefaultConnString = "root:CoEpi@/conn"
 )
 
 // Backend holds a client to connect  to the BigTable backend

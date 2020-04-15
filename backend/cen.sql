@@ -2,7 +2,7 @@ DROP TABLE IF EXISTS CENKeys;
 DROP TABLE IF EXISTS CENReport;
 
 CREATE TABLE `CENKeys` (
-   `cenKey`   varchar(32) DEFAULT "", 
+   `cenKey`   varchar(64) DEFAULT "", 
    `reportID` varchar(64) DEFAULT "",
    `reportTS` int,
    PRIMARY KEY (`cenKey`, `reportID`),
