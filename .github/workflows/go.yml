@@ -27,3 +27,8 @@ jobs:
 
     - name: Unit test
       run: go test
+      env:
+        CI: true
+
+    - name: golangci-lint
+      uses: actions-contrib/golangci-lint@v1
