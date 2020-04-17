@@ -1,7 +1,7 @@
 # CEN API Go Server
 
-This is the Go implementation of the CEN API for _Privacy-Preserving Distributed Contact Tracing_,
-to be used in CEN Apps following CEN protocols.
+This is the Go implementation of the CEN API for _Privacy-Preserving Distributed
+Contact Tracing_, to be used in CEN Apps following CEN protocols.
 
 This is the Go implementation of the [CEN API](https://docs.google.com/document/d/1f65V3PI214-uYfZLUZtm55kdVwoazIMqGJrxcYNI4eg/edit) for _Privacy-Preserving Distributed Contact Tracing_.
 
@@ -139,10 +139,12 @@ ok	github.com/Co-Epi/coepi-backend-go/backend	0.032s
 ```
 
 ## Build + Run
-```
-$ make cen
-go build -o bin/cen
-Done building cen.  Run "bin/cen" to launch CEN Server.
+
+Requires Go > 1.12 with module support
+
+```sh
+go build
+./cen-server
 ```
 
 ## Test
