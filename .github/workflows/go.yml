@@ -24,3 +24,6 @@ jobs:
 
     - name: Build
       run: go build -v
+
+    - name: Unit test
+      run: go test
