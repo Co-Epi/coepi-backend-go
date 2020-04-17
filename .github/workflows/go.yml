@@ -32,3 +32,5 @@ jobs:
 
     - name: golangci-lint
       uses: actions-contrib/golangci-lint@v1
+      with:
+        golangci_lint_version: latest-alpine
