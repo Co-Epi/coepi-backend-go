@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Co-Epi/coepi-backend-go/backend"
+	"github.com/Co-Epi/cen-server/backend"
 )
 
 const (
