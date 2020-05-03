@@ -162,7 +162,7 @@ func (s *Server) postTCNReportHandler(w http.ResponseWriter, r *http.Request) {
 	// ((rvk)(everything-else))(sig)
 
 	// ed25519.Verify(public, message, sig)
-	if !(ed25519.Verify(decodedMessage[:32] , decodedMessage[:len-64], decodedMessage[len-64:])) {
+	if !(ed25519.Verify(decodedMessage[:32] , decodedMessage[:lenDecoded-64], decodedMessage[lenDecoded-64:])) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -193,7 +193,7 @@ func (s *Server) getTCNReportHandler(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 
 	// pass parameters as arguments
-	reports, err := s.backend.ProcessGetTCNReport(q["epochDay"],q["intervalNumber"],q["intervalLength"])
+	reports, err := s.backend.ProcessGetTCNReport(string(q["epochDay"]),string(q["intervalNumber"]),string(q["intervalLength"]))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}

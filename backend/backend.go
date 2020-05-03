@@ -166,7 +166,7 @@ func (backend *Backend) ProcessGetCENKeys(timestamp uint64) (cenKeys []string, e
 // ProcessGetTCNReport manages the GET API endpoint /v4/tcnreport
 //  Input: epochDay, intervalNumber, intervalLength
 //  Output: array of TCNReports, already encoded as base64, in a list
-func (backend *Backend) ProcessGetTCNReport(epochDay []byte, intervalNumber []byte, intervalLength []byte) (reports []*TCNReport, err error) {
+func (backend *Backend) ProcessGetTCNReport(epochDay string, intervalNumber string, intervalLength string) (reports []*TCNReport, err error) {
 	reports = make([]*TCNReport, 0)
 
 // FIXME fix the "where" clause to use TS calculation from date, intervalNumber, intervalLength
