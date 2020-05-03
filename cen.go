@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 
 	"github.com/Co-Epi/cen-server/backend"
 	"github.com/Co-Epi/cen-server/server"
