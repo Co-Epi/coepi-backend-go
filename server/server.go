@@ -191,9 +191,12 @@ func (s *Server) getTCNReportHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Handle parameters
 	q := r.URL.Query()
+	epochDay := q.Get("epochDay")
+	intervalNumber := q.Get("intervalNumber")
+	intervalLength := q.Get("intervalLength")
 
 	// pass parameters as arguments
-	reports, err := s.backend.ProcessGetTCNReport(string(q["epochDay"]),string(q["intervalNumber"]),string(q["intervalLength"]))
+	reports, err := s.backend.ProcessGetTCNReport(epochDay,intervalNumber,intervalLength)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
