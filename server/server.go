@@ -32,7 +32,7 @@ const (
 	DefaultAddr = "172.31.12.128"
 
 	// EndpointTCNReport is the name of the HTTP endpoint for GET/POST of TCNReport for v4
-	EndpointTCNReport = "v4/tcnreport"
+	EndpointTCNReport = "tcnreport/v0.4.0"
 
 	// EndpointCENReport is the name of the HTTP endpoint for GET/POST of CENReport
 	EndpointCENReport = "cenreport"
