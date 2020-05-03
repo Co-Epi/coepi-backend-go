@@ -79,9 +79,7 @@ func (backend *Backend) ProcessTCNReport(tcnReport *TCNReport, tcnRVK []byte) (e
 	// store the tcnreportID in tcnReport table, one row per key
 
 	// TimeStamp is epoch milliseconds
-	currentTime := time.Now()
-	var TimeStamp uint64
-	TimeStamp = currentTime.Unix * 1000
+	TimeStamp := uint64(time.Now().Unix()) * uint64(1000)
 	_, err = stmtReport.Exec(tcnRVK, tcnReport.Report, TimeStamp)
 	if err != nil {
 		panic(5)
