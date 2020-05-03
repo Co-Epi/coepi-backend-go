@@ -150,13 +150,13 @@ func (s *Server) postTCNReportHandler(w http.ResponseWriter, r *http.Request) {
 	copy(payload.Report,body)
 
 	// Need to decode whole message into a buffer
-	decodedMessage, err := base64.StdEncoding.DecodeString( body );
+	decodedMessage, err := base64.StdEncoding.DecodeString( string(body) );
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	lenDecoded := length( decodedMessage )
+	lenDecoded := len( decodedMessage )
 
 	// Use slices to reference rvk and sig, and use them to validate the sig of everything but the sig.
 	// ((rvk)(everything-else))(sig)
@@ -169,7 +169,7 @@ func (s *Server) postTCNReportHandler(w http.ResponseWriter, r *http.Request) {
 
 
 	// Process TCNReport payload and rvk (rvk used to create primary key only)
-	err = s.backend.ProcessTCNReport(&payload, &decodedMessage[:32])
+	err = s.backend.ProcessTCNReport(&payload, decodedMessage[:32])
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
