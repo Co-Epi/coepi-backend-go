@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/json"
-	"encoding/base64"
 	"fmt"
 	"strings"
 	"time"
@@ -36,13 +35,13 @@ type Backend struct {
 type CENReport struct {
 	ReportID        string `json:"reportID,omitempty"`
 	Report          []byte `json:"report,omitempty"`  // this is expected to be a JSON blob but the server doesn't need to parse it
-	CENKeys         string `json:"cenKeys,omitempty"` // comma separated list of hex AES-128 Keys (COMMENT WAS: base64 AES Keys)
+	CENKeys         string `json:"cenKeys,omitempty"` // comma separated list of hex AES-128 Keys
 	ReportMimeType  string `json:"reportMimeType,omitempty"`
 	ReportTimeStamp uint64 `json:"reportTimeStamp,omitempty"`
 }
 
 // TCNReport payload is sent by client to /tcnreport when user reports symptoms
-// TCNReport is original base64-encoded report
+// TCNReport is the original base64-encoded report
 
 // raw bytes of appropriate sizes
 // rvk32 tck32 j1 j2 TLV* sig64
@@ -64,10 +63,7 @@ func NewBackend(mysqlConnectionString string) (backend *Backend, err error) {
 }
 
 // ProcessTCNReport manages the API Endpoint to POST /v4/tcnreport
-//  FIXME: handle different input format for TCNReport (base64 of binary)
-//  FIXME: really only need to grab the rvk, the rest is basically a BLOB
-//  FIXME: and also the signature, need to verify it with the rvk
-//  Input: TCNReport
+//  Input: TCNReport, rvk
 //  Output: error
 //  Behavior: write report bytes to "report" table
 func (backend *Backend) ProcessTCNReport(tcnReport *TCNReport, tcnRVK []byte) (err error) {
@@ -84,7 +80,8 @@ func (backend *Backend) ProcessTCNReport(tcnReport *TCNReport, tcnRVK []byte) (e
 
 	// TimeStamp is epoch milliseconds
 	currentTime := time.Now()
-	TimeStamp := currentTime.Unix * 1000
+	var TimeStamp uint64
+	TimeStamp = currentTime.Unix * 1000
 	_, err = stmtReport.Exec(tcnRVK, tcnReport.Report, TimeStamp)
 	if err != nil {
 		panic(5)
@@ -169,10 +166,8 @@ func (backend *Backend) ProcessGetCENKeys(timestamp uint64) (cenKeys []string, e
 }
 
 // ProcessGetTCNReport manages the GET API endpoint /v4/tcnreport
-//  FIXME: Output: Handle different output format for TCNReport (base64 of binary); treat contents as a BLOB
-//  FIXME: Input is different in v4 !!! More parameters: date, intervalNumber, intervalLength
 //  Input: epochDay, intervalNumber, intervalLength
-//  Output: array of TCNReports, to be encoded as base64, in a list
+//  Output: array of TCNReports, already encoded as base64, in a list
 func (backend *Backend) ProcessGetTCNReport(epochDay string, intervalNumber string, intervalLength string) (reports []*TCNReport, err error) {
 	reports = make([]*TCNReport, 0)
 
