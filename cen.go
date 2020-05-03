@@ -21,7 +21,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("CEN Server v%s - Listening on port %d...\n", version, *port)
+	// fmt.Printf("CEN Server v%s - Listening on port %d...\n", version, *port)
 	for {
 	}
 }

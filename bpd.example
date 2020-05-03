@@ -1,0 +1,28 @@
+covidwatch-app-dev
+{
+  "temporary_contact_key_bytes": "PvLGpfQZgGqnoQRtSr0AHd8J5/WdKwaJNLRCkhGlgHU=",
+  "memo_data": "SGVsbG8sIFdvcmxkIQ==",
+  "memo_type": 1,
+  "start_index": 1,
+  "end_index": 8,
+  "signature_bytes": "+k7HDsVZPY5Pxcz0cpwVBvDOHrrQ0+AyDVL/MbGkXBYG2WAyoqLaNxFuXiB9rSzkdCesDv1NSSk06hrjx2YABA==",
+  "report_verification_public_key_bytes": "v78liBBYQrFXqOH6YydUD1aGpXLMgruKATAjFZ0ycLk="
+}
+
+LMTC-DICKSON:cen-server bdickson1$ echo 'SGVsbG8sIFdvcmxkIQ==' | base64 -d  | od -c
+0000000    H   e   l   l   o   ,       W   o   r   l   d   !
+0000015
+LMTC-DICKSON:cen-server bdickson1$ echo 'v78liBBYQrFXqOH6YydUD1aGpXLMgruKATAjFZ0ycLk=' | base64 -d  | od -c
+0000000  277 277   % 210 020   X   B 261   W 250 341 372   c   '   T 017
+0000020    V 206 245   r    ̂  ** 273 212 001   0   # 025 235   2   p 271
+0000040
+LMTC-DICKSON:cen-server bdickson1$ echo '+k7HDsVZPY5Pxcz0cpwVBvDOHrrQ0+AyDVL/MbGkXBYG2WAyoqLaNxFuXiB9rSzkdCesDv1NSSk06hrjx2YABA==' | base64 -d  | od -c
+0000000  372   N 307 016 305   Y   = 216   O 305 314 364   r 234 025 006
+0000020  360 316 036 272 320 323 340   2  \r   R 377   1 261 244   \ 026
+0000040  006 331   `   2 242 242 332   7 021   n   ^       } 255   , 164
+0000060    t   ' 254 016 375   M   I   )   4 352 032 343 307   f  \0 004
+0000100
+LMTC-DICKSON:cen-server bdickson1$ echo 'PvLGpfQZgGqnoQRtSr0AHd8J5/WdKwaJNLRCkhGlgHU=' | base64 -d  | od -c
+0000000    > 362   ƥ  ** 364 031 200   j 247 241 004   m   J 275  \0 035
+0000020  337  \t 347 365 235   + 006 211   4 264   B 222 021 245 200   u
+0000040

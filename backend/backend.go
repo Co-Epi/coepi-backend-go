@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/json"
+	"encoding/base64"
 	"fmt"
 	"strings"
 	"time"
@@ -19,6 +20,9 @@ const (
 	// TableCENKeys stores the mapping between CENKeys and CENReports.
 	TableCENReport = "CENReport"
 
+	// TCNReports is the only table for TCN
+	TableTCNReport = "TCNReport"
+
 	// Default Conn String 
 	DefaultConnString = "root:CoEpi@/conn"
 )
@@ -27,54 +31,6 @@ const (
 type Backend struct {
 	db *sql.DB
 }
-
-//
-// Brian Dickson's added comments for understanding the SQL elements used/required
-//
-// OLD DEFINITIONS, WRONG SIZE FOR cenKey
-//
-//  CREATE TABLE `CENKeys` (
-//     `cenKey`   varchar(32) DEFAULT "", 
-//     `reportID` varchar(64) DEFAULT "",
-//     `reportTS` int,
-//     PRIMARY KEY (`cenKey`, `reportID`),
-//     KEY (`reportID`),
-//     KEY (`reportTS`),
-//     KEY (`cenKey`)
-//  );
-//  
-//  CREATE TABLE `CENReport` (
-//     `reportID` varchar(64) DEFAULT "",
-//     `report`     varchar(4000) DEFAULT "",
-//     `reportMimeType` varchar(64) DEFAULT "",
-//     `reportTS` int,
-//     PRIMARY KEY (`reportID`),
-//     KEY (`reportTS`)
-//  );
-//
-//
-// NEW DEFINITIONS, RIGHT SIZE FOR cenKey
-//
-//  CREATE TABLE `CENKeys` (
-//     `cenKey`   varchar(64) DEFAULT "", 
-//     `reportID` varchar(64) DEFAULT "",
-//     `reportTS` int,
-//     PRIMARY KEY (`cenKey`, `reportID`),
-//     KEY (`reportID`),
-//     KEY (`reportTS`),
-//     KEY (`cenKey`)
-//  );
-//  
-//  CREATE TABLE `CENReport` (
-//     `reportID` varchar(64) DEFAULT "",
-//     `report`     varchar(4000) DEFAULT "",
-//     `reportMimeType` varchar(64) DEFAULT "",
-//     `reportTS` int,
-//     PRIMARY KEY (`reportID`),
-//     KEY (`reportTS`)
-//  );
-//
-//
 
 // CENReport payload is sent by client to /cenreport when user reports symptoms
 type CENReport struct {
@@ -85,6 +41,17 @@ type CENReport struct {
 	ReportTimeStamp uint64 `json:"reportTimeStamp,omitempty"`
 }
 
+// TCNReport payload is sent by client to /tcnreport when user reports symptoms
+// TCNReport is original base64-encoded report
+
+// raw bytes of appropriate sizes
+// rvk32 tck32 j1 j2 TLV* sig64
+// rvk || tck_{j1-1} || le_u16(j1) || le_u16(j2) || type || memo || sig
+type TCNReport struct {
+	Report          []byte				 // this is a blob ; parsing done only for signature validation on POST
+}
+
+
 // NewBackend sets up a client connection to BigTable to manage incoming payloads
 func NewBackend(mysqlConnectionString string) (backend *Backend, err error) {
 	backend = new(Backend)
@@ -94,6 +61,37 @@ func NewBackend(mysqlConnectionString string) (backend *Backend, err error) {
 	}
 
 	return backend, nil
+}
+
+// ProcessTCNReport manages the API Endpoint to POST /v4/tcnreport
+//  FIXME: handle different input format for TCNReport (base64 of binary)
+//  FIXME: really only need to grab the rvk, the rest is basically a BLOB
+//  FIXME: and also the signature, need to verify it with the rvk
+//  Input: TCNReport
+//  Output: error
+//  Behavior: write report bytes to "report" table
+func (backend *Backend) ProcessTCNReport(tcnReport *TCNReport, tcnRVK []byte) (err error) {
+	// WAS reportData, err := json.Marshal(tcnReport)
+
+	// put the TCNReport in TCNReport table
+	sReport := "insert into TCNReport (reportVK, report, reportTS) values ( ?, ?, ? ) on duplicate key update report = values(report)"
+	stmtReport, err := backend.db.Prepare(sReport)
+	if err != nil {
+		return err
+	}
+
+	// store the tcnreportID in tcnReport table, one row per key
+
+	// TimeStamp is epoch milliseconds
+	currentTime := time.Now()
+	TimeStamp := currentTime.Unix * 1000
+	_, err = stmtReport.Exec(tcnRVK, tcnReport.Report, TimeStamp)
+	if err != nil {
+		panic(5)
+		return err
+	}
+
+	return nil
 }
 
 // ProcessCENReport manages the API Endpoint to POST /cenreport
@@ -168,6 +166,37 @@ func (backend *Backend) ProcessGetCENKeys(timestamp uint64) (cenKeys []string, e
 		cenKeys = append(cenKeys, cenKey)
 	}
 	return cenKeys, nil
+}
+
+// ProcessGetTCNReport manages the GET API endpoint /v4/tcnreport
+//  FIXME: Output: Handle different output format for TCNReport (base64 of binary); treat contents as a BLOB
+//  FIXME: Input is different in v4 !!! More parameters: date, intervalNumber, intervalLength
+//  Input: epochDay, intervalNumber, intervalLength
+//  Output: array of TCNReports, to be encoded as base64, in a list
+func (backend *Backend) ProcessGetTCNReport(epochDay string, intervalNumber string, intervalLength string) (reports []*TCNReport, err error) {
+	reports = make([]*TCNReport, 0)
+
+// FIXME fix the "where" clause to use TS calculation from date, intervalNumber, intervalLength
+// NB: IntervalNumber is relative to date
+// NB: date is now "epochDay", days since start of epoch
+	s := fmt.Sprintf("select TCNReport.report, TCNReport.reportTS From TCNReport where TCNReport.TS >= ((? * 86400) + (? * ?)) and TCNReport.TS <= ((? * 86400) + ((? + 1) * ?))")
+	stmt, err := backend.db.Prepare(s)
+	if err != nil {
+		return reports, err
+	}
+	rows, err := stmt.Query(epochDay, intervalNumber, intervalLength, epochDay, intervalNumber, intervalLength)
+	if err != nil {
+		return reports, err
+	}
+	for rows.Next() {
+		var r TCNReport
+		err = rows.Scan(&(r.Report))
+		if err != nil {
+			return reports, err
+		}
+		reports = append(reports, &r)
+	}
+	return reports, nil
 }
 
 // ProcessGetCENReport manages the POST API endpoint /cenreport
