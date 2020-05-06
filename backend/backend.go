@@ -164,20 +164,19 @@ func (backend *Backend) ProcessGetCENKeys(timestamp uint64) (cenKeys []string, e
 }
 
 // ProcessGetTCNReport manages the GET API endpoint /v4/tcnreport
-//  Input: epochDay, intervalNumber, intervalLength
+//  Input: intervalNumber, intervalLength
 //  Output: array of TCNReports, already encoded as base64, in a list
-func (backend *Backend) ProcessGetTCNReport(epochDay string, intervalNumber string, intervalLength string) (reports []*TCNReport, err error) {
+func (backend *Backend) ProcessGetTCNReport(intervalNumber string, intervalLength string) (reports []*TCNReport, err error) {
 	reports = make([]*TCNReport, 0)
 
 // FIXME fix the "where" clause to use TS calculation from date, intervalNumber, intervalLength
-// NB: IntervalNumber is relative to date
-// NB: date is now "epochDay", days since start of epoch
-	s := fmt.Sprintf("select TCNReport.report, TCNReport.reportTS From TCNReport where TCNReport.TS >= ((? * 86400) + (? * ?)) and TCNReport.TS <= ((? * 86400) + ((? + 1) * ?))")
+// NB: IntervalNumber is relative to start of epoch
+	s := fmt.Sprintf("select TCNReport.report, TCNReport.reportTS From TCNReport where TCNReport.TS >= (? * ?) and TCNReport.TS <= ((? + 1) * ?)")
 	stmt, err := backend.db.Prepare(s)
 	if err != nil {
 		return reports, err
 	}
-	rows, err := stmt.Query(epochDay, intervalNumber, intervalLength, epochDay, intervalNumber, intervalLength)
+	rows, err := stmt.Query(intervalNumber, intervalLength, intervalNumber, intervalLength)
 	if err != nil {
 		return reports, err
 	}

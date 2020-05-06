@@ -176,7 +176,7 @@ func (s *Server) postTCNReportHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("OK"))
 }
 
-// GET /tcnreport?epochDay=<epochDay>&intervalNumber=<intervalNumber>&intervalLength=<intervalLength>
+// GET /tcnreport?intervalNumber=<intervalNumber>&intervalLength=<intervalLength>
 func (s *Server) getTCNReportHandler(w http.ResponseWriter, r *http.Request) {
 	// fmt.Printf("%s: GET %s Request\n", s.curtime(), r.URL.Path)
 
@@ -185,18 +185,17 @@ func (s *Server) getTCNReportHandler(w http.ResponseWriter, r *http.Request) {
 	// if len(pathpieces) >= 1 {
 	// 	tcnKey = pathpieces[1]
 	// } else {
-	// 	http.Error(w, "Usage: Usage: /tcnreport?epochDay=<n>&intervalNumber=<n>&intervalLength=<n>", http.StatusBadRequest)
+	// 	http.Error(w, "Usage: Usage: /tcnreport?intervalNumber=<n>&intervalLength=<n>", http.StatusBadRequest)
 	// 	return
 	// }
 
 	// Handle parameters
 	q := r.URL.Query()
-	epochDay := q.Get("epochDay")
 	intervalNumber := q.Get("intervalNumber")
 	intervalLength := q.Get("intervalLength")
 
 	// pass parameters as arguments
-	reports, err := s.backend.ProcessGetTCNReport(epochDay,intervalNumber,intervalLength)
+	reports, err := s.backend.ProcessGetTCNReport(intervalNumber,intervalLength)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
