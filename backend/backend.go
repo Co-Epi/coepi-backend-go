@@ -66,7 +66,7 @@ func NewBackend(mysqlConnectionString string) (backend *Backend, err error) {
 //  Input: TCNReport, rvk
 //  Output: error
 //  Behavior: write report bytes to "report" table
-func (backend *Backend) ProcessTCNReport(tcnReport *TCNReport, tcnRVK []byte) (err error) {
+func (backend *Backend) ProcessTCNReport(tcnReportString []byte, tcnRVK []byte) (err error) {
 	// WAS reportData, err := json.Marshal(tcnReport)
 
 	// put the TCNReport in TCNReport table
@@ -80,7 +80,7 @@ func (backend *Backend) ProcessTCNReport(tcnReport *TCNReport, tcnRVK []byte) (e
 
 	// TimeStamp is epoch milliseconds
 	TimeStamp := uint64(time.Now().Unix()) * uint64(1000)
-	_, err = stmtReport.Exec(tcnRVK, tcnReport.Report, TimeStamp)
+	_, err = stmtReport.Exec(tcnRVK, tcnReportString, TimeStamp)
 	if err != nil {
 		panic(5)
 		return err
