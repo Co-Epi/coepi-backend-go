@@ -6,6 +6,7 @@ import (
 	"crypto/ed25519"
 	"encoding/json"
 	"encoding/base64"
+	"encoding/gob"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -196,13 +197,14 @@ func (s *Server) getTCNReportHandler(w http.ResponseWriter, r *http.Request) {
 	intervalLength := q.Get("intervalLength")
 
 	// pass parameters as arguments
-	reports, err := s.backend.ProcessGetTCNReport(intervalNumber,intervalLength)
+	// reports, err := s.backend.ProcessGetTCNReport(intervalNumber,intervalLength)
+	reportsStrings, err := s.backend.ProcessGetTCNReport(intervalNumber,intervalLength)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 	// FIXME encode reports with base64 when returning them
 	// some sort of encoder? iterate over list?
-	responsesJSON, err := json.Marshal(reports)
+	// responsesJSON, err := json.Marshal(reports)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -210,7 +212,10 @@ func (s *Server) getTCNReportHandler(w http.ResponseWriter, r *http.Request) {
 	// fmt.Printf("%s: GET %s Response: %s\n", s.curtime(), r.URL.Path, responsesJSON)
 	// FIXME change what the Write has as an argument !!!!
 	// w.Write(responsesJSON)
-	w.Write(reports)
+	buf := &bytes.Buffer{}
+	gob.NewEncoder(buf).Encode(reportStrings)
+	bs := buf.Bytes()
+	w.Write(bs)
 }
 
 // POST /cenreport

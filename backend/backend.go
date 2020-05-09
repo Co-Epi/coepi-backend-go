@@ -166,29 +166,30 @@ func (backend *Backend) ProcessGetCENKeys(timestamp uint64) (cenKeys []string, e
 // ProcessGetTCNReport manages the GET API endpoint /v4/tcnreport
 //  Input: intervalNumber, intervalLength
 //  Output: array of TCNReports, already encoded as base64, in a list
-func (backend *Backend) ProcessGetTCNReport(intervalNumber string, intervalLength string) (reports []*TCNReport, err error) {
-	reports = make([]*TCNReport, 0)
+// func (backend *Backend) ProcessGetTCNReport(intervalNumber string, intervalLength string) (reports []*TCNReport, err error) 
+func (backend *Backend) ProcessGetTCNReport(intervalNumber string, intervalLength string) (reportStrings []string, err error) {
+	reportStrings = make([]string, 0)
 
 // FIXME fix the "where" clause to use TS calculation from date, intervalNumber, intervalLength
 // NB: IntervalNumber is relative to start of epoch
 	s := fmt.Sprintf("select TCNReport.report From TCNReport where TCNReport.reportTS >= (? * ?) and TCNReport.reportTS <= ((? + 1) * ?)")
 	stmt, err := backend.db.Prepare(s)
 	if err != nil {
-		return reports, err
+		return reportStrings, err
 	}
 	rows, err := stmt.Query(intervalNumber, intervalLength, intervalNumber, intervalLength)
 	if err != nil {
-		return reports, err
+		return reportStrings, err
 	}
 	for rows.Next() {
-		var r TCNReport
-		err = rows.Scan(&(r.Report))
+		var r string
+		err = rows.Scan(&(r))
 		if err != nil {
-			return reports, err
+			return reportStrings, err
 		}
-		reports = append(reports, &r)
+		reportStrings = append(reportStrings, &r)
 	}
-	return reports, nil
+	return reportStrings, nil
 }
 
 // ProcessGetCENReport manages the POST API endpoint /cenreport
