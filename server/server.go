@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"encoding/gob"
 	"fmt"
+	"bytes"
 	"io/ioutil"
 	"net/http"
 	"path"
