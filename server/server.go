@@ -6,9 +6,7 @@ import (
 	"crypto/ed25519"
 	"encoding/json"
 	"encoding/base64"
-	"encoding/gob"
 	"fmt"
-	"bytes"
 	"io/ioutil"
 	"net/http"
 	"path"
@@ -218,7 +216,7 @@ func (s *Server) getTCNReportHandler(w http.ResponseWriter, r *http.Request) {
 	// bs := buf.Bytes()
 	// w.Write(bs)
 	for _, report := range reportStrings {
-	  reportOut = []byte(report);
+	  reportOut := []byte(report);
 	  w.Write(reportOut)
 	}
 }
