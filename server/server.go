@@ -199,7 +199,7 @@ func (s *Server) getTCNReportHandler(w http.ResponseWriter, r *http.Request) {
 
 	// pass parameters as arguments
 	// reports, err := s.backend.ProcessGetTCNReport(intervalNumber,intervalLength)
-	reportsStrings, err := s.backend.ProcessGetTCNReport(intervalNumber,intervalLength)
+	reportStrings, err := s.backend.ProcessGetTCNReport(intervalNumber,intervalLength)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
