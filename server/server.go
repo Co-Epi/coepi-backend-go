@@ -209,7 +209,8 @@ func (s *Server) getTCNReportHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	// fmt.Printf("%s: GET %s Response: %s\n", s.curtime(), r.URL.Path, responsesJSON)
 	// FIXME change what the Write has as an argument !!!!
-	w.Write(responsesJSON)
+	// w.Write(responsesJSON)
+	w.Write(reports)
 }
 
 // POST /cenreport
