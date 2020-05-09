@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 
 	"github.com/Co-Epi/cen-server/backend"
 	"github.com/Co-Epi/cen-server/server"
@@ -21,7 +20,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("CEN Server v%s - Listening on port %d...\n", version, *port)
+	// fmt.Printf("CEN Server v%s - Listening on port %d...\n", version, *port)
 	for {
 	}
 }

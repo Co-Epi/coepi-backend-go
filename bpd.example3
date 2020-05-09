@@ -1,0 +1,59 @@
+cm9vdFByb2plY3QubmFtZSA9ICdjb2VwaS1iYWNrZW5kLWtvdGxpbicKCmluY2x1ZGUoCiAgICAgICAgIjphcGktYXdzLWxhbWJkYSIsCiAgICAgICAgIjpjb3JlIgop
+
+GET /tcnreport/0.4.0?reportDayNumber=18005&intervalNumber=1&intervalLength=21600
+
+Resonse: 200
+
+MIME Type: application/json
+
+[ cm9vdFByb2plY3QubmFtZSA9ICdjaS1iY==, rZW5kLWtvdGxpbicKCmluY2xfsdfd==, icKCmluY2x1ZGUoCiAgICAgICAgIjp=, hbWJkYSIsCiAgICAgICAgIjpjb3JlIgop ]
+
+POST /diagnosiskeys/1.2/
+
+MIME Type: application/json
+
+[
+    {
+	keyData: “c2JlcnRvZGxma2hqdDQ1Ngo=”,
+	enIntervalNumber: 18374
+    },
+    {
+	keyData: “c2I3NjU0ZGxma2hqdDQ1Ngo=”,
+	enIntervalNumber: 18375
+    },
+    {
+	keyData: “MTEyMjU0ZGxma2hqdDQ1Ngo=”,
+	enIntervalNumber: 18376
+    },
+    {
+	keyData: “MTEyMmlvcHVma2hqdDQ1Ngo=”,
+	enIntervalNumber: 18377
+    }
+]
+
+
+GET /diagnosiskeys/1.2?reportDayNumber=18005&intervalNumber=1&intervalLength=21600
+
+Response: 200
+
+MIME Type: application/json
+
+[
+    {
+	keyData: “c2JlcnRvZGxma2hqdDQ1Ngo=”,
+	enIntervalNumber: 18374
+    },
+    {
+	keyData: “c2I3NjU0ZGxma2hqdDQ1Ngo=”,
+	enIntervalNumber: 18375
+    },
+    {
+	keyData: “MTEyMjU0ZGxma2hqdDQ1Ngo=”,
+	enIntervalNumber: 18376
+    },
+    {
+	keyData: “MTEyMmlvcHVma2hqdDQ1Ngo=”,
+	enIntervalNumber: 18377
+    }
+]
+

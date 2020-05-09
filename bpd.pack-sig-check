@@ -1,0 +1,111 @@
+#!/usr/bin/perl
+
+# script to take some test data and validate the structure, including signature
+use MIME::Base64 qw(encode_base64 decode_base64);
+use Crypt::Ed25519;
+use strict;
+use warnings;
+
+#
+# Order of components and types
+# rvk base64(key)
+# tcn base64(thing)
+# start uint16
+# end uint16
+# type int16 or char (uint8)
+# length uint16
+# value base64(string)
+# sig base64(sha256(everything before this))
+
+#my $rvk = decode_base64("v78liBBYQrFXqOH6YydUD1aGpXLMgruKATAjFZ0ycLk=");
+my @rvk = unpack("C*",decode_base64("v78liBBYQrFXqOH6YydUD1aGpXLMgruKATAjFZ0ycLk="));
+#my $tcn = decode_base64("PvLGpfQZgGqnoQRtSr0AHd8J5/WdKwaJNLRCkhGlgHU=");
+my @tcn = unpack("C*",decode_base64("PvLGpfQZgGqnoQRtSr0AHd8J5/WdKwaJNLRCkhGlgHU="));
+my $start = 1;
+my $end = 8;
+my $type = 1;
+my $memo = decode_base64("SGVsbG8sIFdvcmxkIQ==");
+my $mlen = length($memo);
+#my $rec_sig = decode_base64("+k7HDsVZPY5Pxcz0cpwVBvDOHrrQ0+AyDVL/MbGkXBYG2WAyoqLaNxFuXiB9rSzkdCesDv1NSSk06hrjx2YABA==");
+my @rec_sig = unpack("C*",decode_base64("+k7HDsVZPY5Pxcz0cpwVBvDOHrrQ0+AyDVL/MbGkXBYG2WAyoqLaNxFuXiB9rSzkdCesDv1NSSk06hrjx2YABA=="));
+my $bin_data1 = pack("C*",@rvk);
+my $bin_data2 = pack("C*",@tcn);
+my $bin_data3 = pack("n",$start);
+my $bin_data4 = pack("n",$end);
+my $bin_data5 = pack("C",$type);
+my $bin_data6 = pack("C",$mlen);
+my $bin_data7 = pack("a*",$memo);
+my $bin_data = pack("C32C32vvCa*",@rvk,@tcn,$start,$end,$type,$memo);
+my $bin_data_alt = pack("C32C32vvCCa*",@rvk,@tcn,$start,$end,$type,$mlen,$memo);
+my $rec_sig = pack("C64",@rec_sig);
+#$valid = Crypt::Ed25519::verify $message, $pubkey, $signature;
+my $valid = Crypt::Ed25519::verify $bin_data, $bin_data1, $rec_sig;
+printf "Signature is %s\n",($valid?"valid":"invalid");
+
+$valid = Crypt::Ed25519::verify $bin_data_alt, $bin_data1, $rec_sig;
+printf "Alt Signature is %s\n",($valid?"valid":"invalid");
+
+# test basic routines
+my $message = "Hello, world.";
+
+# generate a public/private key pair once
+my ($pubkey, $privkey) = Crypt::Ed25519::generate_keypair;
+printf "Ed25519 pubkey %s privkey %s\n",encode_base64($pubkey,""),encode_base64($privkey,"");
+
+# sign a message
+my $signature = Crypt::Ed25519::sign $message, $pubkey, $privkey;
+printf "Ed25519 message %s signature %s\n",$message, encode_base64($signature,"");
+
+# verify message
+my $valid2 = Crypt::Ed25519::verify $message, $pubkey, $signature;
+printf "Signature is %s\n",($valid2?"valid":"invalid");
+
+
+# FIXME - calculate signature, compare to $rec_sig
+
+#covidwatch-app-dev
+#{
+#  "temporary_contact_key_bytes": "PvLGpfQZgGqnoQRtSr0AHd8J5/WdKwaJNLRCkhGlgHU=",
+#  "memo_data": "SGVsbG8sIFdvcmxkIQ==",
+#  "memo_type": 1,
+#  "start_index": 1,
+#  "end_index": 8,
+#  "signature_bytes": "+k7HDsVZPY5Pxcz0cpwVBvDOHrrQ0+AyDVL/MbGkXBYG2WAyoqLaNxFuXiB9rSzkdCesDv1NSSk06hrjx2YABA==",
+#  "report_verification_public_key_bytes": "v78liBBYQrFXqOH6YydUD1aGpXLMgruKATAjFZ0ycLk="
+#}
+# 
+# echo 'SGVsbG8sIFdvcmxkIQ==' | base64 -d  | od -c
+# 0000000    H   e   l   l   o   ,       W   o   r   l   d   !
+# 0000015
+# 
+# echo 'v78liBBYQrFXqOH6YydUD1aGpXLMgruKATAjFZ0ycLk=' | base64 -d  | od -c
+# 0000000  277 277   % 210 020   X   B 261   W 250 341 372   c   '   T 017
+# 0000020    V 206 245   r    ̂  ** 273 212 001   0   # 025 235   2   p 271
+# 0000040
+# 
+# echo '+k7HDsVZPY5Pxcz0cpwVBvDOHrrQ0+AyDVL/MbGkXBYG2WAyoqLaNxFuXiB9rSzkdCesDv1NSSk06hrjx2YABA==' | base64 -d  | od -c
+# 0000000  372   N 307 016 305   Y   = 216   O 305 314 364   r 234 025 006
+# 0000020  360 316 036 272 320 323 340   2  \r   R 377   1 261 244   \ 026
+# 0000040  006 331   `   2 242 242 332   7 021   n   ^       } 255   , 164
+# 0000060    t   ' 254 016 375   M   I   )   4 352 032 343 307   f  \0 004
+# 0000100
+# 
+# echo 'PvLGpfQZgGqnoQRtSr0AHd8J5/WdKwaJNLRCkhGlgHU=' | base64 -d  | od -c
+# 0000000    > 362   ƥ  ** 364 031 200   j 247 241 004   m   J 275  \0 035
+# 0000020  337  \t 347 365 235   + 006 211   4 264   B 222 021 245 200   u
+# 0000040
+
+#### Other weird test data from somewhere
+# 
+# curl -X POST https://18ye1iivg6.execute-api.us-west-1.amazonaws.com/v4/tcnreport -d "ZXlKMFpYTjBJam9pWW05a2VTSjk="
+# curl -X GET https://18ye1iivg6.execute-api.us-west-1.amazonaws.com/v4/tcnreport
+# ["WlhsS01GcFlUakJKYW05cFdXMDVhMlZUU2prPQ=="]
+# curl -X GET https://18ye1iivg6.execute-api.us-west-1.amazonaws.com/v4/tcnreport?date=2020-04-19
+# ["WlhsS01GcFlUakJKYW05cFdXMDVhMlZUU2prPQ=="]
+# 
+# echo 'ZXlKMFpYTjBJam9pWW05a2VTSjk=' | base64 -d  | base64 -d && echo
+# {"test":"body"}
+# 
+# echo 'WlhsS01GcFlUakJKYW05cFdXMDVhMlZUU2prPQ==' | base64 -d | base64 -d | base64 -d && echo
+# {"test":"body"}
+# 

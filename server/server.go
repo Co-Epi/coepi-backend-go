@@ -3,7 +3,9 @@ package server
 import (
 //	"crypto/tls"
 //	"crypto/x509"
+	"crypto/ed25519"
 	"encoding/json"
+	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -28,6 +30,9 @@ const (
 
 	// DefaultAddr is the addr which the CEN HTTP server is listening in on
 	DefaultAddr = "172.31.12.128"
+
+	// EndpointTCNReport is the name of the HTTP endpoint for GET/POST of TCNReport for v4
+	EndpointTCNReport = "tcnreport/v0.4.0"
 
 	// EndpointCENReport is the name of the HTTP endpoint for GET/POST of CENReport
 	EndpointCENReport = "cenreport"
@@ -64,7 +69,13 @@ func NewServer(httpPort uint16, connString string) (s *Server, err error) {
 
 func (s *Server) getConnection(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	if strings.Contains(r.URL.Path, EndpointCENReport) {
+	if strings.Contains(r.URL.Path, EndpointTCNReport) {
+		if r.Method == http.MethodPost {
+			s.postTCNReportHandler(w, r)
+		} else {
+			s.getTCNReportHandler(w, r)
+		}
+	} else if strings.Contains(r.URL.Path, EndpointCENReport) {
 		if r.Method == http.MethodPost {
 			s.postCENReportHandler(w, r)
 		} else {
@@ -120,6 +131,86 @@ func (s *Server) curtime() (t string) {
 	return fmt.Sprintf("%s", currentTime.Format("2006-01-02 15:04:05"))
 }
 
+// POST /tcnreport/v0.4.0
+func (s *Server) postTCNReportHandler(w http.ResponseWriter, r *http.Request) {
+	// Read Post Body
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	r.Body.Close()
+
+	// fmt.Printf("%s: POST /tcnreport/v0.4.0: %s\n", s.curtime(), string(body))
+
+	// Parse body as TCNReport
+	var payload backend.TCNReport
+
+	// keep the base64-encoded message, pass it to the handler as-is
+	copy(payload.Report,body)
+
+	// Need to decode whole message into a buffer
+	decodedMessage, err := base64.StdEncoding.DecodeString( string(body) );
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	lenDecoded := len( decodedMessage )
+
+	// Use slices to reference rvk and sig, and use them to validate the sig of everything but the sig.
+	// ((rvk)(everything-else))(sig)
+
+	// ed25519.Verify(public, message, sig)
+	if !(ed25519.Verify(decodedMessage[:32] , decodedMessage[:lenDecoded-64], decodedMessage[lenDecoded-64:])) {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+
+	// Process TCNReport payload and rvk (rvk used to create primary key only)
+	err = s.backend.ProcessTCNReport(&payload, decodedMessage[:32])
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	w.Write([]byte("OK"))
+}
+
+// GET /tcnreport?intervalNumber=<intervalNumber>&intervalLength=<intervalLength>
+func (s *Server) getTCNReportHandler(w http.ResponseWriter, r *http.Request) {
+	// fmt.Printf("%s: GET %s Request\n", s.curtime(), r.URL.Path)
+
+	// tcnKey := ""
+	// pathpieces := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+	// if len(pathpieces) >= 1 {
+	// 	tcnKey = pathpieces[1]
+	// } else {
+	// 	http.Error(w, "Usage: Usage: /tcnreport?intervalNumber=<n>&intervalLength=<n>", http.StatusBadRequest)
+	// 	return
+	// }
+
+	// Handle parameters
+	q := r.URL.Query()
+	intervalNumber := q.Get("intervalNumber")
+	intervalLength := q.Get("intervalLength")
+
+	// pass parameters as arguments
+	reports, err := s.backend.ProcessGetTCNReport(intervalNumber,intervalLength)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	// FIXME encode reports with base64 when returning them
+	// some sort of encoder? iterate over list?
+	responsesJSON, err := json.Marshal(reports)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	// fmt.Printf("%s: GET %s Response: %s\n", s.curtime(), r.URL.Path, responsesJSON)
+	// FIXME change what the Write has as an argument !!!!
+	w.Write(responsesJSON)
+}
+
 // POST /cenreport
 func (s *Server) postCENReportHandler(w http.ResponseWriter, r *http.Request) {
 	// Read Post Body
@@ -130,7 +221,7 @@ func (s *Server) postCENReportHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	r.Body.Close()
 
-	fmt.Printf("%s: POST /cenreport: %s\n", s.curtime(), string(body))
+	// fmt.Printf("%s: POST /cenreport: %s\n", s.curtime(), string(body))
 
 	// Parse body as CENReport
 	var payload backend.CENReport
@@ -150,7 +241,7 @@ func (s *Server) postCENReportHandler(w http.ResponseWriter, r *http.Request) {
 
 // GET /cenreport/<cenkey>
 func (s *Server) getCENReportHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Printf("%s: GET %s Request\n", s.curtime(), r.URL.Path)
+	// fmt.Printf("%s: GET %s Request\n", s.curtime(), r.URL.Path)
 
 	cenKey := ""
 	pathpieces := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
@@ -171,14 +262,14 @@ func (s *Server) getCENReportHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	fmt.Printf("%s: GET %s Response: %s\n", s.curtime(), r.URL.Path, responsesJSON)
+	// fmt.Printf("%s: GET %s Response: %s\n", s.curtime(), r.URL.Path, responsesJSON)
 	w.Write(responsesJSON)
 }
 
 // GET /cenkeys/<timestamp>
 func (s *Server) getCENKeysHandler(w http.ResponseWriter, r *http.Request) {
 	ts := uint64(0)
-	fmt.Printf("%s: GET %s Request: %s\n", s.curtime(), r.URL.Path)
+	// fmt.Printf("%s: GET %s Request: %s\n", s.curtime(), r.URL.Path)
 
 	pathpieces := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
 	if len(pathpieces) > 1 {
@@ -202,7 +293,7 @@ func (s *Server) getCENKeysHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	fmt.Printf("%s: GET %s Response: %s\n", s.curtime(), r.URL.Path, responsesJSON)
+	// fmt.Printf("%s: GET %s Response: %s\n", s.curtime(), r.URL.Path, responsesJSON)
 	w.Write(responsesJSON)
 }
 
