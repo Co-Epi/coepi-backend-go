@@ -187,7 +187,7 @@ func (backend *Backend) ProcessGetTCNReport(intervalNumber string, intervalLengt
 		if err != nil {
 			return reportStrings, err
 		}
-		reportStrings = append(reportStrings, &r)
+		reportStrings = append(reportStrings, r)
 	}
 	return reportStrings, nil
 }
