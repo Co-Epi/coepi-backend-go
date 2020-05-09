@@ -170,7 +170,7 @@ func (s *Server) postTCNReportHandler(w http.ResponseWriter, r *http.Request) {
 
 
 	// Process TCNReport payload and rvk (rvk used to create primary key only)
-	err = s.backend.ProcessTCNReport(&payload, decodedMessage[:32])
+	err = s.backend.ProcessTCNReport(body, decodedMessage[:32])
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}

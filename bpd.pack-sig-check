@@ -44,6 +44,9 @@ printf "Signature is %s\n",($valid?"valid":"invalid");
 
 $valid = Crypt::Ed25519::verify $bin_data_alt, $bin_data1, $rec_sig;
 printf "Alt Signature is %s\n",($valid?"valid":"invalid");
+printf "Message used for Alt Sig was %s\n",encode_base64($bin_data_alt);
+printf "Sig used for Alt Sig was %s\n",encode_base64($rec_sig);
+printf "Message+sig used for Alt Sig was %s\n",encode_base64($bin_data_alt.$rec_sig);
 
 # test basic routines
 my $message = "Hello, world.";
