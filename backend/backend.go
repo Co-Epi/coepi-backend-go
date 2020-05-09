@@ -171,7 +171,7 @@ func (backend *Backend) ProcessGetTCNReport(intervalNumber string, intervalLengt
 
 // FIXME fix the "where" clause to use TS calculation from date, intervalNumber, intervalLength
 // NB: IntervalNumber is relative to start of epoch
-	s := fmt.Sprintf("select TCNReport.report, TCNReport.reportTS From TCNReport where TCNReport.reportTS >= (? * ?) and TCNReport.reportTS <= ((? + 1) * ?)")
+	s := fmt.Sprintf("select TCNReport.report From TCNReport where TCNReport.reportTS >= (? * ?) and TCNReport.reportTS <= ((? + 1) * ?)")
 	stmt, err := backend.db.Prepare(s)
 	if err != nil {
 		return reports, err
