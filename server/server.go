@@ -141,7 +141,7 @@ func (s *Server) postTCNReportHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	r.Body.Close()
 
-	// fmt.Printf("%s: POST /tcnreport/v0.4.0: %s\n", s.curtime(), string(body))
+	fmt.Printf("%s: POST /tcnreport/v0.4.0: %s\n", s.curtime(), string(body))
 
 	// Parse body as TCNReport
 	var payload backend.TCNReport
@@ -163,6 +163,7 @@ func (s *Server) postTCNReportHandler(w http.ResponseWriter, r *http.Request) {
 
 	// ed25519.Verify(public, message, sig)
 	if !(ed25519.Verify(decodedMessage[:32] , decodedMessage[:lenDecoded-64], decodedMessage[lenDecoded-64:])) {
+		fmt.Printf("%s: POST /tcnreport/v0.4.0: message %s failed to verify with ed25519\n", s.curtime(), string(body))
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -298,5 +299,5 @@ func (s *Server) getCENKeysHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) homeHandler(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("CEN API Server v0.2"))
+	w.Write([]byte("TCN API Server v0.4.0"))
 }
