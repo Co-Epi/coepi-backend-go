@@ -201,13 +201,6 @@ func (s *Server) getTCNReportHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	// FIXME encode reports with base64 when returning them
-	// some sort of encoder? iterate over list?
-	// responsesJSON, err := json.Marshal(reports)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
 	// fmt.Printf("%s: GET %s Response: %s\n", s.curtime(), r.URL.Path, responsesJSON)
 	// FIXME change what the Write has as an argument !!!!
 	// w.Write(responsesJSON)
@@ -215,10 +208,19 @@ func (s *Server) getTCNReportHandler(w http.ResponseWriter, r *http.Request) {
 	// gob.NewEncoder(buf).Encode(reportStrings)
 	// bs := buf.Bytes()
 	// w.Write(bs)
-	for _, report := range reportStrings {
-	  reportOut := []byte(report);
-	  w.Write(reportOut)
+	//for _, report := range reportStrings {
+	//  reportOut := []byte(report);
+	//  w.Write(reportOut)
+	//}
+
+	// FIXME encode reports with base64 when returning them
+	// some sort of encoder? iterate over list?
+	responsesJSON, err := json.Marshal(reportStrings)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
+	w.Write(responsesJSON)
 }
 
 // POST /cenreport
