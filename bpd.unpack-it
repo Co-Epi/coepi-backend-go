@@ -1,0 +1,98 @@
+#!/opt/local/bin/perl
+
+# script to take some test data and validate the structure, including signature
+# use lib '/opt/local/lib/perl5/site_perl/5.26/darwin-thread-multi-2level/';
+# unshift (@INC,'/opt/local/lib/perl5/site_perl/5.26/darwin-thread-multi-2level');
+use MIME::Base64 qw(encode_base64 decode_base64);
+use Crypt::Ed25519;
+use strict;
+use warnings;
+
+#
+# Order of components and types
+# rvk base64(key)
+# tcn base64(thing)
+# start uint16
+# end uint16
+# type uint8
+# length uint8
+# value base64(string)
+# sig base64(sha256(everything before this))
+
+my $line=<>;
+chomp($line);
+my $firstrawline=decode_base64($line);
+my $rawline=pack("H*",$firstrawline);
+
+my $totlen=length($rawline);
+my $rvk=substr($rawline,0,32);
+my $tcn=substr($rawline,32,32);
+my $start=substr($rawline,64,2);
+my $end=substr($rawline,66,2);
+my $type=substr($rawline,68,1);
+my $len=substr($rawline,69,1);
+#my $memo=decode_base64($value);
+my $validateme=substr($rawline,0,$totlen-64);
+
+my $startval=unpack("v",$start);
+my $endval=unpack("v",$end);
+my $typeval=unpack("C",$type);
+my $lenval=unpack("C",$len);
+my $value=substr($rawline,70,$totlen-$lenval-64);
+my $sig=substr($rawline,70+$lenval,64);
+
+printf "Raw line = %s\n\n",$rawline;
+printf "Raw memo = %s\n",$value;
+#printf "Decoded memo = %s\n",$memo;
+printf "Start %d End %d Type %d Length %d\n",$startval,$endval,$typeval,$lenval;
+my $valid = Crypt::Ed25519::verify $validateme, $rvk, $sig;
+printf "Signature is %s\n",($valid?"valid":"invalid");
+
+## 
+## #my $rvk = decode_base64("v78liBBYQrFXqOH6YydUD1aGpXLMgruKATAjFZ0ycLk=");
+## my @rvk = unpack("C*",decode_base64("v78liBBYQrFXqOH6YydUD1aGpXLMgruKATAjFZ0ycLk="));
+## #my $tcn = decode_base64("PvLGpfQZgGqnoQRtSr0AHd8J5/WdKwaJNLRCkhGlgHU=");
+## my @tcn = unpack("C*",decode_base64("PvLGpfQZgGqnoQRtSr0AHd8J5/WdKwaJNLRCkhGlgHU="));
+## my $start = 1;
+## my $end = 8;
+## my $type = 1;
+## my $memo = decode_base64("SGVsbG8sIFdvcmxkIQ==");
+## my $mlen = length($memo);
+## #my $rec_sig = decode_base64("+k7HDsVZPY5Pxcz0cpwVBvDOHrrQ0+AyDVL/MbGkXBYG2WAyoqLaNxFuXiB9rSzkdCesDv1NSSk06hrjx2YABA==");
+## my @rec_sig = unpack("C*",decode_base64("+k7HDsVZPY5Pxcz0cpwVBvDOHrrQ0+AyDVL/MbGkXBYG2WAyoqLaNxFuXiB9rSzkdCesDv1NSSk06hrjx2YABA=="));
+## my $bin_data1 = pack("C*",@rvk);
+## my $bin_data2 = pack("C*",@tcn);
+## my $bin_data3 = pack("n",$start);
+## my $bin_data4 = pack("n",$end);
+## my $bin_data5 = pack("C",$type);
+## my $bin_data6 = pack("C",$mlen);
+## my $bin_data7 = pack("a*",$memo);
+## my $bin_data = pack("C32C32vvCa*",@rvk,@tcn,$start,$end,$type,$memo);
+## my $bin_data_alt = pack("C32C32vvCCa*",@rvk,@tcn,$start,$end,$type,$mlen,$memo);
+## my $rec_sig = pack("C64",@rec_sig);
+## #$valid = Crypt::Ed25519::verify $message, $pubkey, $signature;
+## my $valid = Crypt::Ed25519::verify $bin_data, $bin_data1, $rec_sig;
+## printf "Signature is %s\n",($valid?"valid":"invalid");
+## 
+## $valid = Crypt::Ed25519::verify $bin_data_alt, $bin_data1, $rec_sig;
+## printf "Alt Signature is %s\n",($valid?"valid":"invalid");
+## printf "Message used for Alt Sig was %s\n",encode_base64($bin_data_alt);
+## printf "Sig used for Alt Sig was %s\n",encode_base64($rec_sig);
+## printf "Message+sig used for Alt Sig was %s\n",encode_base64($bin_data_alt.$rec_sig);
+## 
+## # test basic routines
+## my $message = "Hello, world.";
+## 
+## # generate a public/private key pair once
+## my ($pubkey, $privkey) = Crypt::Ed25519::generate_keypair;
+## printf "Ed25519 pubkey %s privkey %s\n",encode_base64($pubkey,""),encode_base64($privkey,"");
+## 
+## # sign a message
+## my $signature = Crypt::Ed25519::sign $message, $pubkey, $privkey;
+## printf "Ed25519 message %s signature %s\n",$message, encode_base64($signature,"");
+## 
+## # verify message
+## my $valid2 = Crypt::Ed25519::verify $message, $pubkey, $signature;
+## printf "Signature is %s\n",($valid2?"valid":"invalid");
+## 
+## 
