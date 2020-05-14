@@ -1,13 +1,15 @@
-# CEN API Go Server
+# TCN API Go Server
 
-This is the Go implementation of the CEN API for _Privacy-Preserving Distributed
-Contact Tracing_, to be used in CEN Apps following CEN protocols.
+This is the Go implementation of the TCN API for _Privacy-Preserving Distributed
+Contact Tracing_, to be used in TCN Apps following TCN protocols.
 
-This is the Go implementation of the [CEN API](https://docs.google.com/document/d/1f65V3PI214-uYfZLUZtm55kdVwoazIMqGJrxcYNI4eg/edit) for _Privacy-Preserving Distributed Contact Tracing_.
+This is the Go implementation of the [TCN API](https://docs.google.com/document/d/1f65V3PI214-uYfZLUZtm55kdVwoazIMqGJrxcYNI4eg/edit) for _Privacy-Preserving Distributed Contact Tracing_.
 
 Our mission is to reduce transmission of disease, by developing applications and protocols that support
 contact tracing without loss of privacy (no identifiable information).  The CEN Protocol achieves this goal
 by combining Bluetooth Low Energy with lightweight client and server technology.
+
+(NB: CEN was renamed to TCN. The v1 API remains unchanged with "CEN" as part of the endpoints. The v0.4.0 API uses "TCN" as part of the endpoints. The documentation for the original endpoints below is unchanged, although the project is now generally refered to as TCN instead of CEN.)
 
 *Tech Lead*: Sourabh Niyogi (`sourabh@wolk.com`)
 
