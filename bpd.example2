@@ -1,5 +1,0 @@
-curl -X POST https://18ye1iivg6.execute-api.us-west-1.amazonaws.com/v4/tcnreport -d "ZXlKMFpYTjBJam9pWW05a2VTSjk="
-curl -X GET https://18ye1iivg6.execute-api.us-west-1.amazonaws.com/v4/tcnreport
-["WlhsS01GcFlUakJKYW05cFdXMDVhMlZUU2prPQ=="]
-curl -X GET https://18ye1iivg6.execute-api.us-west-1.amazonaws.com/v4/tcnreport?date=2020-04-19
-["WlhsS01GcFlUakJKYW05cFdXMDVhMlZUU2prPQ=="]
