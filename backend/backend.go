@@ -160,6 +160,7 @@ func (backend *Backend) ProcessGetCENKeys(timestamp uint64) (cenKeys []string, e
 		}
 		cenKeys = append(cenKeys, cenKey)
 	}
+	stmt.Close()
 	return cenKeys, nil
 }
 
@@ -189,6 +190,7 @@ func (backend *Backend) ProcessGetTCNReport(intervalNumber string, intervalLengt
 		}
 		reportStrings = append(reportStrings, r)
 	}
+	stmt.Close()
 	return reportStrings, nil
 }
 
@@ -215,6 +217,7 @@ func (backend *Backend) ProcessGetCENReport(cenKey string) (reports []*CENReport
 		}
 		reports = append(reports, &r)
 	}
+	stmt.Close()
 	return reports, nil
 }
 
